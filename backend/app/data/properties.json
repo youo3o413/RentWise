@@ -1,0 +1,169 @@
+[
+  {
+    "id": "P001",
+    "title": "指南路採光套房",
+    "address": "台北市文山區指南路二段",
+    "rent": 13200,
+    "management_fee": 500,
+    "water_fee": 200,
+    "electricity_rate": 6.0,
+    "estimated_kwh": 130,
+    "commute_minutes": 9,
+    "has_window": true,
+    "window_type": "對外窗",
+    "has_elevator": false,
+    "floor": 4,
+    "noise_level": "medium",
+    "nearby": [
+      "便利商店",
+      "公車站",
+      "餐廳",
+      "洗衣店"
+    ],
+    "features": [
+      "採光良好",
+      "獨立洗衣機",
+      "可開伙"
+    ],
+    "risks": [
+      "無電梯",
+      "週末附近較熱鬧"
+    ],
+    "description": "距離政大近，有大面對外窗與簡易流理台，四樓無電梯。",
+    "image_url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+  },
+  {
+    "id": "P002",
+    "title": "木柵捷運電梯套房",
+    "address": "台北市文山區木柵路四段",
+    "rent": 14500,
+    "management_fee": 1000,
+    "water_fee": 0,
+    "electricity_rate": 5.5,
+    "estimated_kwh": 120,
+    "commute_minutes": 22,
+    "has_window": true,
+    "window_type": "小型對外窗",
+    "has_elevator": true,
+    "floor": 7,
+    "noise_level": "low",
+    "nearby": [
+      "便利商店",
+      "捷運站",
+      "超市",
+      "藥局"
+    ],
+    "features": [
+      "有電梯",
+      "管理員",
+      "垃圾代收"
+    ],
+    "risks": [
+      "總支出接近預算",
+      "室內坪數較小"
+    ],
+    "description": "社區管理完善、環境安靜，搭公車到政大約二十二分鐘。",
+    "image_url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+  },
+  {
+    "id": "P003",
+    "title": "萬芳社區雅房",
+    "address": "台北市文山區興隆路三段",
+    "rent": 9800,
+    "management_fee": 300,
+    "water_fee": 150,
+    "electricity_rate": 5.0,
+    "estimated_kwh": 100,
+    "commute_minutes": 28,
+    "has_window": true,
+    "window_type": "對外窗",
+    "has_elevator": false,
+    "floor": 2,
+    "noise_level": "low",
+    "nearby": [
+      "便利商店",
+      "醫院",
+      "超市",
+      "公車站"
+    ],
+    "features": [
+      "租金低",
+      "環境安靜",
+      "公共廚房"
+    ],
+    "risks": [
+      "共用衛浴",
+      "通勤時間較長"
+    ],
+    "description": "安靜住宅區內的雅房，價格實惠，但需要共用衛浴。",
+    "image_url": "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80"
+  },
+  {
+    "id": "P004",
+    "title": "政大校門口新裝潢套房",
+    "address": "台北市文山區萬壽路",
+    "rent": 15800,
+    "management_fee": 700,
+    "water_fee": 200,
+    "electricity_rate": 6.5,
+    "estimated_kwh": 140,
+    "commute_minutes": 5,
+    "has_window": false,
+    "window_type": "氣窗",
+    "has_elevator": true,
+    "floor": 5,
+    "noise_level": "high",
+    "nearby": [
+      "便利商店",
+      "公車站",
+      "餐廳",
+      "健身房"
+    ],
+    "features": [
+      "新裝潢",
+      "乾濕分離",
+      "有電梯"
+    ],
+    "risks": [
+      "超出預算",
+      "無真正對外窗",
+      "鄰近商圈較吵"
+    ],
+    "description": "位置極近且裝潢新，但沒有真正對外窗，夜間可能較吵。",
+    "image_url": "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=1200&q=80"
+  },
+  {
+    "id": "P005",
+    "title": "動物園站景觀套房",
+    "address": "台北市文山區新光路二段",
+    "rent": 13800,
+    "management_fee": 800,
+    "water_fee": 200,
+    "electricity_rate": 5.8,
+    "estimated_kwh": 120,
+    "commute_minutes": 17,
+    "has_window": true,
+    "window_type": "落地對外窗",
+    "has_elevator": true,
+    "floor": 8,
+    "noise_level": "low",
+    "nearby": [
+      "便利商店",
+      "捷運站",
+      "河濱",
+      "YouBike"
+    ],
+    "features": [
+      "景觀佳",
+      "採光良好",
+      "有電梯",
+      "獨立陽台"
+    ],
+    "risks": [
+      "管理費較高",
+      "餐飲選擇較少"
+    ],
+    "description": "鄰近動物園站，採光與景觀佳，公車可直達政大。",
+    "image_url": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+  }
+]
