@@ -8,6 +8,16 @@ from app.models.schemas import UserRequirements
 def build_rule_summary(ranked: list[dict[str, Any]]) -> str:
     best = ranked[0]
     property_ = best["property"]
+    qualified = bool(
+        best["assessments"]["suitability"].metrics.get("qualified", True)
+    )
+    if not qualified:
+        return (
+            "目前沒有房源符合全部必要條件。參考分最高的是"
+            f"「{property_.title}」，但明確衝突為"
+            f"{best['assessments']['suitability'].metrics.get('disqualifying_conflicts', '必要條件')}；"
+            "建議調整條件或擴大搜尋範圍，而不是直接簽約。"
+        )
     return (
         f"綜合多個 Agent 的分析，首選為「{property_.title}」，"
         f"適配分數 {best['total_score']:.1f} 分，預估每月支出 "
@@ -17,7 +27,11 @@ def build_rule_summary(ranked: list[dict[str, Any]]) -> str:
     )
 
 
-def generate_ai_summary(req: UserRequirements, ranked: list[dict[str, Any]]) -> tuple[str, str]:
+def generate_ai_summary(
+    req: UserRequirements,
+    ranked: list[dict[str, Any]],
+    destination_context: str = "",
+) -> tuple[str, str]:
     settings = get_settings()
     if not settings.openai_api_key:
         return build_rule_summary(ranked), "demo"
@@ -31,8 +45,26 @@ def generate_ai_summary(req: UserRequirements, ranked: list[dict[str, Any]]) -> 
                 "title": item["property"].title,
                 "score": item["total_score"],
                 "monthly_cost": item["estimated_monthly_cost"],
+                "address": item["property"].address,
+                "commute_minutes": item["property"].commute_minutes,
+                "qualified": item["assessments"]["suitability"].metrics.get(
+                    "qualified",
+                    True,
+                ),
+                "disqualifying_conflicts": item["assessments"][
+                    "suitability"
+                ].metrics.get("disqualifying_conflicts", ""),
                 "strengths": item["strengths"],
                 "tradeoffs": item["tradeoffs"],
+                "agent_summaries": {
+                    name: assessment.summary
+                    for name, assessment in item["assessments"].items()
+                },
+                "community_evidence": (
+                    item["community_evidence"].model_dump()
+                    if item.get("community_evidence")
+                    else None
+                ),
             }
             for index, item in enumerate(ranked)
         ]
@@ -42,10 +74,15 @@ def generate_ai_summary(req: UserRequirements, ranked: list[dict[str, Any]]) -> 
             instructions=(
                 "你是 RentWise 的 Comparison Agent。請使用繁體中文，根據多個"
                 "專業 Agent 已完成的結構化結果，給出 120 字內、具體且不誇大的"
-                "租屋決策摘要。需要提到首選、主要取捨與實地看房提醒。"
+                "租屋決策摘要。需要理解目的地的完整地理脈絡，提到首選、主要"
+                "取捨與實地看房提醒；AI 估算與圖片判讀必須保留不確定性。"
             ),
             input=json.dumps(
-                {"requirements": req.model_dump(), "ranked_results": compact},
+                {
+                    "requirements": req.model_dump(),
+                    "destination_context": destination_context or req.destination,
+                    "ranked_results": compact,
+                },
                 ensure_ascii=False,
             ),
         )

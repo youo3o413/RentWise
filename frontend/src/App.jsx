@@ -2,20 +2,35 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
   Building2,
+  Calculator,
   Check,
   ChevronDown,
   ChevronUp,
   CircleDollarSign,
   Clock3,
+  ExternalLink,
   Home,
   LoaderCircle,
+  Lock,
   MapPin,
+  MapPinned,
   Route,
   ShieldCheck,
   Sparkles,
   TriangleAlert,
+  Unlock,
 } from "lucide-react";
-import { getHealth, getRecommendation } from "./api";
+import {
+  getHealth,
+  getMapContext,
+  getRecommendation,
+  parseRequirements,
+  resolveDestination,
+} from "./api";
+import MapView from "./MapView";
+
+const RENT_591_URL = "https://rent.591.com.tw/";
+const HOUSEFUN_URL = "https://rent.housefun.com.tw/";
 
 const initialForm = {
   budget: 15000,
@@ -27,14 +42,27 @@ const initialForm = {
   needs_convenience_store: true,
   max_floor_without_elevator: 3,
   preferences: ["採光良好", "可開伙"],
+  property_source: "multi",
+  weights: {
+    location: 30,
+    cost: 30,
+    property: 25,
+    noise: 15,
+  },
+  commute_mode: "transit_walk",
+  needs_parking: false,
+  needs_rental_subsidy: false,
+  use_community_evidence: false,
 };
 
 const agentMeta = {
+  "Source Planning Agent": { icon: Route, label: "目的地生活圈與房源來源規劃" },
   "Data Loader": { icon: Building2, label: "房源資料載入" },
-  "Location Agent": { icon: MapPin, label: "地點與通勤分析" },
+  "Location Agent": { icon: MapPin, label: "步行與大眾運輸通勤分析" },
   "Cost Agent": { icon: CircleDollarSign, label: "真實生活成本估算" },
   "Property Agent": { icon: Home, label: "房況與設備檢查" },
   "Suitability Agent": { icon: ShieldCheck, label: "個人適配度評估" },
+  "Community Evidence Agent": { icon: Bot, label: "公開社群意見查證" },
   "Comparison Agent": { icon: Bot, label: "跨房源比較決策" },
 };
 
@@ -59,6 +87,104 @@ function Toggle({ checked, onChange, label }) {
       <span className="toggle-dot" />
       {label}
     </button>
+  );
+}
+
+const weightLabels = {
+  location: "通勤與生活圈",
+  cost: "每月成本",
+  property: "房屋條件",
+  noise: "噪音偏好",
+};
+
+const requirementFieldLabels = {
+  budget: "預算",
+  destination: "目的地",
+  max_commute_minutes: "通勤上限",
+  needs_window: "對外窗",
+  noise_preference: "噪音偏好",
+  needs_elevator: "電梯",
+  needs_convenience_store: "附近超商",
+  max_floor_without_elevator: "樓層上限",
+  preferences: "其他偏好",
+  weights: "適配權重",
+  commute_mode: "通勤方式",
+  needs_parking: "停車需求",
+  needs_rental_subsidy: "租金補貼",
+  use_community_evidence: "公開社群查證",
+};
+
+const weightNames = Object.keys(weightLabels);
+
+function distributeIntegerTotal(entries, total) {
+  if (!entries.length) return {};
+  const sourceTotal = entries.reduce((sum, [, value]) => sum + Number(value), 0);
+  const exact = entries.map(([name, value]) => [
+    name,
+    sourceTotal ? Number(value) / sourceTotal * total : total / entries.length,
+  ]);
+  const result = Object.fromEntries(exact.map(([name, value]) => [name, Math.floor(value)]));
+  let remainder = total - Object.values(result).reduce((sum, value) => sum + value, 0);
+  exact
+    .sort((a, b) => (b[1] - Math.floor(b[1])) - (a[1] - Math.floor(a[1])))
+    .forEach(([name]) => {
+      if (remainder > 0) {
+        result[name] += 1;
+        remainder -= 1;
+      }
+    });
+  return result;
+}
+
+function normalizeWeights(weights) {
+  return distributeIntegerTotal(Object.entries(weights), 100);
+}
+
+function rebalanceWeights(weights, changedName, requestedValue, locks) {
+  if (locks[changedName]) return weights;
+  const lockedOthers = weightNames.filter((name) => name !== changedName && locks[name]);
+  const lockedTotal = lockedOthers.reduce((sum, name) => sum + Number(weights[name]), 0);
+  const unlockedOthers = weightNames.filter((name) => name !== changedName && !locks[name]);
+  const changedValue = Math.max(0, Math.min(100 - lockedTotal, Math.round(requestedValue)));
+  const remaining = 100 - lockedTotal - changedValue;
+  return {
+    ...weights,
+    ...distributeIntegerTotal(
+      unlockedOthers.map((name) => [name, weights[name]]),
+      remaining,
+    ),
+    [changedName]: unlockedOthers.length ? changedValue : 100 - lockedTotal,
+  };
+}
+
+function WeightControl({ name, value, locked, max, onChange, onToggleLock }) {
+  return (
+    <div className={`weight-control ${locked ? "locked" : ""}`}>
+      <span>
+        <strong>{weightLabels[name]}</strong>
+        <span>
+          <b>{value}%</b>
+          <button
+            type="button"
+            className="weight-lock"
+            onClick={() => onToggleLock(name)}
+            aria-label={`${locked ? "解除鎖定" : "鎖定"}${weightLabels[name]}權重`}
+            title={locked ? "解除鎖定" : "鎖定此權重"}
+          >
+            {locked ? <Lock size={12} /> : <Unlock size={12} />}
+          </button>
+        </span>
+      </span>
+      <input
+        type="range"
+        min="0"
+        max={max}
+        step="1"
+        value={value}
+        disabled={locked}
+        onChange={(event) => onChange(name, Number(event.target.value))}
+      />
+    </div>
   );
 }
 
@@ -100,14 +226,299 @@ function AgentPipeline({ trace, loading }) {
   );
 }
 
-function ScoreRing({ score }) {
+function ScoreRing({ score, qualified = true }) {
   const rounded = Math.round(score);
   return (
-    <div className="score-ring" style={{ "--score": `${rounded * 3.6}deg` }}>
+    <div
+      className={`score-ring ${qualified ? "" : "disqualified"}`}
+      style={{ "--score": `${rounded * 3.6}deg` }}
+    >
       <div>
         <strong>{rounded}</strong>
-        <span>適配分</span>
+        <span>{qualified ? "適配分" : "不合格"}</span>
       </div>
+    </div>
+  );
+}
+
+function hasMetric(value) {
+  return value !== undefined && value !== null && value !== "unknown";
+}
+
+function AssessmentCalculation({ assessment, assessments }) {
+  const metrics = assessment.metrics || {};
+  const score = Number(assessment.score).toFixed(1);
+  let calculation = "";
+  let explanation = "";
+
+  if (assessment.agent === "Location Agent") {
+    if (!hasMetric(metrics.commute_score)) {
+      calculation = "通勤時間尚未取得，因此目前無法計算 Location 分數";
+    } else {
+      const commuteRatio = Number(metrics.commute_ratio) * 100;
+      const components = [
+        `通勤 ${Number(metrics.commute_score).toFixed(1)} × ${Math.round(Number(metrics.commute_component_weight) * 100)}%`,
+      ];
+      if (Number(metrics.store_component_weight) > 0 && hasMetric(metrics.store_score)) {
+        components.push(
+          `超商 ${Number(metrics.store_score).toFixed(1)} × ${Math.round(Number(metrics.store_component_weight) * 100)}%`,
+        );
+      }
+      if (Number(metrics.parking_component_weight) > 0 && hasMetric(metrics.parking_score)) {
+        components.push(
+          `停車 ${Number(metrics.parking_score).toFixed(1)} × ${Math.round(Number(metrics.parking_component_weight) * 100)}%`,
+        );
+      }
+      calculation = `${components.join(" ＋ ")} ＝ ${score} 分`;
+      explanation = `通勤 ${metrics.commute_minutes} ÷ 上限 ${metrics.commute_limit} 分鐘＝${commuteRatio.toFixed(0)}%，先換算為 ${Number(metrics.commute_score).toFixed(1)} 分`;
+    }
+  } else if (assessment.agent === "Cost Agent") {
+    const ratio = Number(metrics.cost_ratio);
+    const band = ratio <= 0.7
+      ? "使用預算 70% 以下"
+      : ratio <= 1
+        ? "落在預算 70–100% 區間"
+        : ratio <= 1.2
+          ? "超出預算 0–20% 區間"
+          : "超出預算 20% 以上";
+    calculation = `NT$ ${Number(metrics.estimated_monthly_cost).toLocaleString()} ÷ NT$ ${Number(metrics.budget).toLocaleString()} ＝ ${(ratio * 100).toFixed(1)}% → ${score} 分`;
+    explanation = band;
+  } else if (assessment.agent === "Property Agent") {
+    const met = Number(metrics.met_count);
+    const unmet = Number(metrics.unmet_count);
+    const known = met + unmet;
+    calculation = known
+      ? `${met} 項符合 ÷ ${known} 項已知條件 ＝ ${score} 分`
+      : "沒有已知條件，因此不產生 Property 分數";
+    explanation = `${metrics.unknown_count} 項待確認；資料完整度 ${metrics.data_completeness}% 另外顯示，不混入分數`;
+  } else if (assessment.agent === "Suitability Agent") {
+    const labels = {
+      location: "Location",
+      cost: "Cost",
+      property: "Property",
+      noise: "噪音",
+    };
+    const rawScores = {
+      location: assessments.location?.score,
+      cost: assessments.cost?.score,
+      property: assessments.property?.score,
+      noise: metrics.noise_score,
+    };
+    const parts = Object.keys(labels)
+      .filter((key) => metrics[`${key}_available`] && Number(metrics[`${key}_weight`]) > 0)
+      .map((key) => (
+        `${labels[key]} ${Number(rawScores[key]).toFixed(1)} × ${(Number(metrics[`${key}_weight`]) * 100).toFixed(1)}%`
+      ));
+    calculation = `${parts.join(" ＋ ")} ＝ ${score} 分`;
+    explanation = metrics.qualified === false
+      ? `但明確違反必要條件：${metrics.disqualifying_conflicts}，因此標示不合格`
+      : `依可取得資料計算；證據涵蓋原權重 ${metrics.evidence_coverage_percent}%`;
+  } else {
+    return null;
+  }
+
+  return (
+    <p className="assessment-calculation">
+      <Calculator size={14} />
+      <span>
+        <strong>本房源計算</strong>
+        <b>{calculation}</b>
+        {explanation && <small>{explanation}</small>}
+      </span>
+    </p>
+  );
+}
+
+function ScoreBreakdown({ item }) {
+  const suitability = item.assessments.suitability;
+  const metrics = suitability.metrics;
+  const locationMetrics = item.assessments.location.metrics;
+  const costMetrics = item.assessments.cost.metrics;
+  const propertyMetrics = item.assessments.property.metrics;
+  const rows = [
+    {
+      key: "location",
+      label: "通勤與生活圈",
+      score: item.assessments.location.score,
+      available: metrics.location_available,
+    },
+    {
+      key: "cost",
+      label: "每月成本",
+      score: item.assessments.cost.score,
+      available: metrics.cost_available,
+    },
+    {
+      key: "property",
+      label: "房屋條件",
+      score: item.assessments.property.score,
+      available: metrics.property_available,
+    },
+    {
+      key: "noise",
+      label: "噪音偏好",
+      score: metrics.noise_score,
+      available: metrics.noise_available,
+    },
+  ];
+  const qualified = metrics.qualified !== false;
+  return (
+    <details className="score-breakdown">
+      <summary>適配分怎麼算？</summary>
+      <div>
+        <p className="formula-version">
+          {metrics.formula_version} · 相同輸入會得到相同結果
+        </p>
+        {rows.map(({ key, label, score, available }) => {
+          const originalWeight = Number(metrics[`original_${key}_weight`] || 0);
+          const effectiveWeight = Number(metrics[`${key}_weight`] || 0);
+          const contribution = Number(metrics[`${key}_contribution`] || 0);
+          return (
+          <span key={key} className={available ? "" : "unavailable"}>
+            <strong>{label}</strong>
+            <i>
+              {available ? (
+                <>
+                  {Math.round(score)} × {Math.round(effectiveWeight * 100)}%
+                  {Math.round(originalWeight * 100) !== Math.round(effectiveWeight * 100)
+                    ? `（原 ${Math.round(originalWeight * 100)}%）`
+                    : ""}
+                </>
+              ) : `未取得，原 ${Math.round(originalWeight * 100)}% 已重新分配`}
+            </i>
+            <b>{available ? contribution.toFixed(1) : "—"}</b>
+          </span>
+        )})}
+        {!qualified && (
+          <span className="qualification-fail">
+            <strong>必要條件資格</strong>
+            <i>{metrics.disqualifying_conflicts}</i>
+            <b>不合格</b>
+          </span>
+        )}
+        <span className="score-total">
+          <strong>{qualified ? "最終適配分" : "參考分數（不合格）"}</strong><i />
+          <b>{Number(item.total_score).toFixed(1)}</b>
+        </span>
+        <div className="score-evidence">
+          <span>
+            通勤：{locationMetrics.commute_minutes === "unknown"
+              ? "未取得"
+              : `${locationMetrics.commute_minutes} ÷ ${locationMetrics.commute_limit} 分鐘`
+            }
+            {locationMetrics.commute_ratio !== "unknown"
+              ? ` = ${Math.round(Number(locationMetrics.commute_ratio) * 100)}%`
+              : ""}
+          </span>
+          <span>
+            Location 內部權重：通勤 {Math.round(Number(locationMetrics.commute_component_weight) * 100)}%
+            {Number(locationMetrics.store_component_weight) > 0
+              ? ` · 超商 ${Math.round(Number(locationMetrics.store_component_weight) * 100)}%（${Math.round(Number(locationMetrics.store_score))} 分）`
+              : ""}
+            {Number(locationMetrics.parking_component_weight) > 0
+              ? ` · 停車 ${Math.round(Number(locationMetrics.parking_component_weight) * 100)}%（${Math.round(Number(locationMetrics.parking_score))} 分）`
+              : ""}
+          </span>
+          <span>
+            成本：NT$ {Number(costMetrics.estimated_monthly_cost).toLocaleString()}
+            {" ÷ "}NT$ {Number(costMetrics.budget).toLocaleString()}
+            {" = "}{Math.round(Number(costMetrics.cost_ratio) * 100)}%
+          </span>
+          <span>
+            房屋：已知條件符合率 {propertyMetrics.known_match_rate}%
+            {" · "}資料完整度 {propertyMetrics.data_completeness}%
+          </span>
+          <span>
+            有效證據覆蓋原權重 {metrics.evidence_coverage_percent}%；未知資料不給中性分。
+          </span>
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function CommunityEvidenceCard({ evidence }) {
+  if (!evidence) return null;
+  return (
+    <div className="community-evidence">
+      <div>
+        <Bot size={16} />
+        <strong>公開社群參考</strong>
+        <span>
+          {evidence.sources.length} 個來源 · 可信度：
+          {evidence.confidence === "medium" ? "中" : "低"}
+        </span>
+      </div>
+      <p>{evidence.summary}</p>
+      {!!evidence.findings?.length && (
+        <div className="community-findings">
+          {evidence.findings.map((finding) => (
+            <div className={`community-finding ${finding.sentiment}`} key={`${finding.topic}-${finding.summary}`}>
+              <strong>{finding.topic}</strong>
+              <span>
+                {{
+                  positive: "正面",
+                  mixed: "意見不一",
+                  negative: "負面",
+                  no_evidence: "尚無證據",
+                }[finding.sentiment]}：{finding.summary}
+              </span>
+              <small>
+                {{
+                  exact_property: "同一房源",
+                  same_building: "同棟社區",
+                  nearby_area: "附近街區",
+                  general_area: "一般生活圈",
+                }[finding.scope]}
+              </small>
+            </div>
+          ))}
+        </div>
+      )}
+      {!!evidence.sources.length && (
+        <div className="evidence-links">
+          {evidence.sources.map((source) => (
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={source.url}
+            >
+              {source.title}<ExternalLink size={12} />
+            </a>
+          ))}
+        </div>
+      )}
+      <small>{evidence.disclaimer}</small>
+    </div>
+  );
+}
+
+const conditionSymbols = {
+  met: "✓",
+  unmet: "×",
+  unknown: "?",
+};
+
+function PropertyConditionStrip({ assessment }) {
+  const checks = (assessment?.checks || []).filter(
+    (check) => check.status !== "not_required",
+  );
+  if (!checks.length) return null;
+  return (
+    <div className="condition-strip" aria-label="房屋條件核對">
+      <strong>房屋條件</strong>
+      {checks.slice(0, 4).map((check) => (
+        <span
+          className={`condition-chip ${check.status}`}
+          key={check.label}
+          title={check.evidence}
+        >
+          <i>{conditionSymbols[check.status]}</i>{check.label}
+        </span>
+      ))}
+      {checks.length > 4 && <small>＋{checks.length - 4}</small>}
+      <small>資料完整 {assessment.metrics.data_completeness}%</small>
     </div>
   );
 }
@@ -115,8 +526,10 @@ function ScoreRing({ score }) {
 function ResultCard({ item }) {
   const [open, setOpen] = useState(item.rank === 1);
   const p = item.property;
+  const propertyAssessment = item.assessments.property;
+  const qualified = item.assessments.suitability.metrics.qualified !== false;
   return (
-    <article className={`result-card ${item.rank === 1 ? "winner" : ""}`}>
+    <article className={`result-card ${item.rank === 1 && qualified ? "winner" : ""} ${qualified ? "" : "ineligible"}`}>
       <div className="rank-badge">#{item.rank}</div>
       <img src={p.image_url} alt={p.title} />
       <div className="result-main">
@@ -124,21 +537,97 @@ function ResultCard({ item }) {
           <div>
             <div className="title-line">
               <h3>{p.title}</h3>
-              {item.rank === 1 && <span className="best-tag"><Sparkles size={14} />首選</span>}
+              {item.rank === 1 && qualified && <span className="best-tag"><Sparkles size={14} />首選</span>}
             </div>
             <p><MapPin size={15} />{p.address}</p>
           </div>
-          <ScoreRing score={item.total_score} />
+          <ScoreRing
+            score={item.total_score}
+            qualified={qualified}
+          />
         </div>
 
         <div className="metrics-grid">
-          <div><span>預估月支出</span><strong>NT$ {item.estimated_monthly_cost.toLocaleString()}</strong></div>
-          <div><span>通勤時間</span><strong>{p.commute_minutes} 分鐘</strong></div>
-          <div><span>窗戶</span><strong>{p.window_type}</strong></div>
-          <div><span>樓層</span><strong>{p.floor}F／{p.has_elevator ? "有電梯" : "無電梯"}</strong></div>
+          <div>
+            <span>預估月支出</span>
+            <strong>NT$ {item.estimated_monthly_cost.toLocaleString()}</strong>
+            {p.cost_estimated_by_ai && (
+              <small>
+                AI 依所在地與房型補估未揭露水電 · 可信度
+                {p.cost_estimate_confidence === "high"
+                  ? "高"
+                  : p.cost_estimate_confidence === "medium" ? "中" : "低"}
+              </small>
+            )}
+          </div>
+          <div>
+            <span>通勤時間</span>
+            <strong>{p.commute_minutes ? `約 ${p.commute_minutes} 分鐘` : "地址無法定位"}</strong>
+            {p.commute_method && (
+              <small>
+                {p.commute_method}
+                {p.commute_transfers != null ? ` · 轉乘 ${p.commute_transfers} 次` : ""}
+                {p.route_distance_km != null ? ` · ${p.route_distance_km} km` : ""}
+              </small>
+            )}
+            {(p.transit_commute_minutes || p.driving_commute_minutes) && (
+              <small>
+                {p.transit_commute_minutes
+                  ? `大眾運輸 ${p.transit_commute_minutes} 分`
+                  : "大眾運輸未取得"}
+                {" · "}
+                {p.driving_commute_minutes
+                  ? `駕車 ${p.driving_commute_minutes} 分`
+                  : "駕車未取得"}
+              </small>
+            )}
+          </div>
+          <div>
+            <span>窗戶</span><strong>{p.window_type}</strong>
+            {p.vision_analyzed_by_ai && (
+              <small>
+                AI 圖片判讀 · 空間
+                {{
+                  spacious: "寬敞",
+                  adequate: "適中",
+                  compact: "緊湊",
+                  unknown: "無法確認",
+                }[p.space_impression]}
+                {p.listing_area_ping ? ` · 刊登 ${p.listing_area_ping} 坪` : ""}
+              </small>
+            )}
+          </div>
+          <div>
+            <span>樓層／電梯</span>
+            <strong>
+              {p.floor ? `${p.floor}F` : "未揭露"}／
+              {p.has_elevator === true ? "有電梯" : p.has_elevator === false ? "無電梯" : "未揭露"}
+            </strong>
+          </div>
         </div>
 
+        <PropertyConditionStrip assessment={propertyAssessment} />
+
         <p className="recommendation">{item.recommendation}</p>
+
+        {(p.source_links?.length || p.source_url) && (
+          <div className="property-source-links">
+            {(p.source_links?.length
+              ? p.source_links
+              : [{ name: p.source_name || "租屋平台", url: p.source_url }]
+            ).map((link) => (
+              <a
+                className="property-source-link"
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={`${link.name}-${link.url}`}
+              >
+                查看 {link.name} 原始刊登 <ExternalLink size={15} />
+              </a>
+            ))}
+          </div>
+        )}
 
         <div className="pros-cons">
           <div>
@@ -150,6 +639,7 @@ function ResultCard({ item }) {
             <ul>{item.tradeoffs.slice(0, 3).map((x) => <li key={x}>{x}</li>)}</ul>
           </div>
         </div>
+        <CommunityEvidenceCard evidence={item.community_evidence} />
 
         <button className="detail-button" onClick={() => setOpen(!open)}>
           查看各 Agent 分析 {open ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
@@ -160,10 +650,47 @@ function ResultCard({ item }) {
             {Object.values(item.assessments).map((assessment) => (
               <div className="assessment" key={assessment.agent}>
                 <div>
-                  <strong>{assessment.agent}</strong>
+                  <strong>
+                    {assessment.agent}
+                    {assessment.metrics.ai_used && " · OpenAI"}
+                  </strong>
                   <span>{assessment.summary}</span>
+                  <AssessmentCalculation
+                    assessment={assessment}
+                    assessments={item.assessments}
+                  />
+                  {assessment.agent === "Suitability Agent" && (
+                    <ScoreBreakdown item={item} />
+                  )}
+                  {!!assessment.checks?.length && (
+                    <div className="condition-evidence">
+                      {assessment.checks
+                        .filter((check) => check.status !== "not_required")
+                        .map((check) => (
+                          <span className={check.status} key={check.label}>
+                            <i>{conditionSymbols[check.status]}</i>
+                            <span>
+                              <strong>{check.label}</strong>
+                              <small>{check.evidence}</small>
+                            </span>
+                          </span>
+                        ))}
+                    </div>
+                  )}
                 </div>
-                <b>{Math.round(assessment.score)}</b>
+                {assessment.agent === "Property Agent" ? (
+                <b className="condition-count">
+                    {assessment.metrics.met_count} 項符合
+                    {" · "}資料 {assessment.metrics.data_completeness}%
+                </b>
+                ) : assessment.agent === "Suitability Agent"
+                  && assessment.metrics.qualified === false ? (
+                  <b className="assessment-unqualified">不合格</b>
+                ) : assessment.metrics.score_available === false ? (
+                  <b className="assessment-unknown">待確認</b>
+                ) : (
+                  <b>{Math.round(assessment.score)}</b>
+                )}
               </div>
             ))}
           </div>
@@ -180,19 +707,139 @@ export default function App() {
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [page, setPage] = useState("ranking");
+  const [mapContext, setMapContext] = useState(null);
+  const [mapLoading, setMapLoading] = useState(false);
+  const [mapError, setMapError] = useState("");
+  const [requirementText, setRequirementText] = useState("");
+  const [requirementLoading, setRequirementLoading] = useState(false);
+  const [requirementResult, setRequirementResult] = useState(null);
+  const [requirementError, setRequirementError] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [destinationResolution, setDestinationResolution] = useState(null);
+  const [destinationResolving, setDestinationResolving] = useState(false);
+  const [destinationError, setDestinationError] = useState("");
+  const [weightLocks, setWeightLocks] = useState(
+    Object.fromEntries(weightNames.map((name) => [name, false])),
+  );
 
   useEffect(() => {
     getHealth().then(setHealth).catch(() => setHealth(null));
   }, []);
 
+  useEffect(() => {
+    const query = form.destination.trim();
+    if (!query) {
+      setDestinationResolution(null);
+      setDestinationError("");
+      setDestinationResolving(false);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setDestinationResolving(true);
+    setDestinationError("");
+    setDestinationResolution(null);
+    const timer = window.setTimeout(async () => {
+      try {
+        const resolved = await resolveDestination(query, controller.signal);
+        setDestinationResolution(resolved);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setDestinationError(err.message || "無法辨識這個目的地");
+        }
+      } finally {
+        if (!controller.signal.aborted) setDestinationResolving(false);
+      }
+    }, 650);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.destination]);
+
   const modeLabel = useMemo(() => {
+    if (data?.property_source === "multi" && data?.mode === "ai") return "Multi-source · OpenAI";
+    if (data?.property_source === "multi") return "Multi-source · Rules";
+    if (data?.property_source === "591" && data?.mode === "ai") return "591 live · OpenAI";
+    if (data?.property_source === "591") return "591 live · Rules";
     if (data?.mode === "ai") return "OpenAI AI mode";
     if (health?.openai_enabled) return "OpenAI ready";
     return "Demo rules mode";
   }, [data, health]);
+  const normalizedWeights = useMemo(() => {
+    const total = Object.values(form.weights).reduce(
+      (sum, value) => sum + Number(value),
+      0,
+    );
+    return Object.fromEntries(
+      Object.entries(form.weights).map(([name, value]) => [
+        name,
+        total ? Math.round(Number(value) / total * 100) : 0,
+      ]),
+    );
+  }, [form.weights]);
+  const topPriority = useMemo(
+    () => Object.entries(normalizedWeights).sort((a, b) => b[1] - a[1])[0],
+    [normalizedWeights],
+  );
+  const inheritedFields = useMemo(() => {
+    if (!requirementResult) return [];
+    const updated = new Set(requirementResult.updated_fields || []);
+    return ["destination", "budget", "max_commute_minutes"]
+      .filter((name) => !updated.has(name))
+      .map((name) => requirementFieldLabels[name]);
+  }, [requirementResult]);
+  const displayPreferences = useMemo(
+    () => preferenceText
+      .split(/[、,，]/)
+      .map((value) => value.trim())
+      .filter(Boolean),
+    [preferenceText],
+  );
 
   function update(name, value) {
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function updateWeight(name, value) {
+    setForm((current) => {
+      const weights = rebalanceWeights(current.weights, name, value, weightLocks);
+      return { ...current, weights };
+    });
+  }
+
+  function toggleWeightLock(name) {
+    setWeightLocks((current) => ({ ...current, [name]: !current[name] }));
+  }
+
+  async function applyNaturalLanguageRequirements() {
+    setRequirementLoading(true);
+    setRequirementError("");
+    setRequirementResult(null);
+    try {
+      const current = {
+        ...form,
+        budget: Number(form.budget),
+        max_commute_minutes: Number(form.max_commute_minutes),
+        max_floor_without_elevator: Number(form.max_floor_without_elevator),
+        preferences: preferenceText
+          .split(/[、,，]/)
+          .map((value) => value.trim())
+          .filter(Boolean),
+      };
+      const result = await parseRequirements(requirementText, current);
+      setForm({
+        ...result.requirements,
+        weights: normalizeWeights(result.requirements.weights),
+      });
+      setPreferenceText(result.requirements.preferences.join("、"));
+      setRequirementResult(result);
+      setAdvancedOpen(false);
+    } catch (err) {
+      setRequirementError(err.message || "Requirement Agent 無法解析需求。");
+    } finally {
+      setRequirementLoading(false);
+    }
   }
 
   async function submit(event) {
@@ -200,9 +847,16 @@ export default function App() {
     setLoading(true);
     setError("");
     setData(null);
+    setPage("ranking");
+    setMapContext(null);
+    setMapError("");
     try {
       const payload = {
         ...form,
+        destination_resolved_address:
+          destinationResolution?.resolved_address || "",
+        destination_latitude: destinationResolution?.latitude ?? null,
+        destination_longitude: destinationResolution?.longitude ?? null,
         budget: Number(form.budget),
         max_commute_minutes: Number(form.max_commute_minutes),
         max_floor_without_elevator: Number(form.max_floor_without_elevator),
@@ -210,10 +864,43 @@ export default function App() {
       };
       const result = await getRecommendation(payload);
       setData(result);
+      window.setTimeout(() => {
+        document.getElementById("ranked-results")?.scrollIntoView({ behavior: "smooth" });
+      }, 0);
     } catch (err) {
-      setError("分析失敗：請確認 FastAPI 已在 8000 port 啟動。");
+      setError(err.message || "分析失敗：請確認 FastAPI 已在 8000 port 啟動。");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function openMap() {
+    setPage("map");
+    if (mapContext || !data?.results.length) return;
+    setMapLoading(true);
+    setMapError("");
+    try {
+      const context = await getMapContext({
+        destination: form.destination,
+        destination_address:
+          destinationResolution?.resolved_address || "",
+        destination_latitude: destinationResolution?.latitude ?? null,
+        destination_longitude: destinationResolution?.longitude ?? null,
+        properties: data.results.slice(0, 6).map((item) => ({
+          id: item.property.id,
+          title: item.property.title,
+          address: item.property.address,
+          score: item.total_score,
+          source_url: item.property.source_url || "",
+          latitude: item.property.latitude,
+          longitude: item.property.longitude,
+        })),
+      });
+      setMapContext(context);
+    } catch (err) {
+      setMapError(err.message || "地圖服務暫時無法使用。");
+    } finally {
+      setMapLoading(false);
     }
   }
 
@@ -222,7 +909,27 @@ export default function App() {
       <header className="hero">
         <nav>
           <div className="brand"><div><Home size={21} /></div><strong>RentWise</strong></div>
-          <span className="mode-badge"><span />{modeLabel}</span>
+          <div className="nav-actions">
+            <a
+              className="source-link source-link-nav"
+              href={RENT_591_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="在新分頁開啟 591 租屋"
+            >
+              591 <ExternalLink size={15} />
+            </a>
+            <a
+              className="source-link source-link-nav"
+              href={HOUSEFUN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="在新分頁開啟好房網快租"
+            >
+              好房網 <ExternalLink size={15} />
+            </a>
+            <span className="mode-badge"><span />{modeLabel}</span>
+          </div>
         </nav>
         <div className="hero-copy">
           <span className="eyebrow">MULTI-AGENT RENTAL DECISION PLATFORM</span>
@@ -232,6 +939,16 @@ export default function App() {
       </header>
 
       <div className="app-shell">
+        {page === "map" && data ? (
+          <MapView
+            context={mapContext}
+            loading={mapLoading}
+            error={mapError}
+            destinationName={form.destination}
+            onBack={() => setPage("ranking")}
+          />
+        ) : (
+          <>
         <form className="panel form-panel" onSubmit={submit}>
           <div className="section-title">
             <div>
@@ -241,14 +958,157 @@ export default function App() {
             <Route size={24} />
           </div>
 
+          <div className="requirement-agent">
+            <div className="requirement-agent-heading">
+              <div className="requirement-agent-icon"><Bot size={18} /></div>
+              <div>
+                <strong>Requirement Agent</strong>
+                <span>用一句話描述需求，AI 會填入條件與建議權重</span>
+              </div>
+              <b>OpenAI</b>
+            </div>
+            <div className="requirement-agent-input">
+              <textarea
+                value={requirementText}
+                onChange={(event) => setRequirementText(event.target.value)}
+                placeholder="例如：我在輔大上課，預算一萬五，30 分鐘內到，通勤最重要，一定要有窗，附近希望有超商。"
+                rows="3"
+              />
+              <button
+                type="button"
+                onClick={applyNaturalLanguageRequirements}
+                disabled={
+                  requirementLoading
+                  || requirementText.trim().length < 3
+                  || !health?.openai_enabled
+                }
+              >
+                {requirementLoading
+                  ? <><LoaderCircle className="spin" size={17} />解析中</>
+                  : <><Sparkles size={17} />套用需求</>}
+              </button>
+            </div>
+            {!health?.openai_enabled && health && (
+              <small className="requirement-hint">
+                後端尚未設定 OPENAI_API_KEY，仍可直接使用下方表單。
+              </small>
+            )}
+            {requirementResult && (
+              <div className="requirement-success">
+                <Check size={16} />
+                <span>
+                  <strong>{requirementResult.interpretation}</strong>
+                  {!!requirementResult.assumptions.length && (
+                    <small>
+                      待確認：{requirementResult.assumptions.join("、")}
+                    </small>
+                  )}
+                </span>
+              </div>
+            )}
+            {requirementError && (
+              <small className="requirement-error">{requirementError}</small>
+            )}
+          </div>
+
+          <div className={`requirements-overview ${requirementResult ? "ai-applied" : ""}`}>
+            <div className="overview-heading">
+              <div>
+                <strong>
+                  {requirementResult ? "AI 已整理需求" : "目前分析條件"}
+                </strong>
+                <span>確認摘要後可直接開始分析</span>
+              </div>
+              {requirementResult && <b><Check size={13} />已套用</b>}
+            </div>
+            <div className="overview-grid">
+              <div>
+                <span>目的地</span>
+                <strong>
+                  {destinationResolution?.resolved_label || form.destination}
+                </strong>
+              </div>
+              <div><span>總預算</span><strong>NT$ {Number(form.budget).toLocaleString()}</strong></div>
+              <div><span>通勤上限</span><strong>{form.max_commute_minutes} 分鐘</strong></div>
+              <div>
+                <span>最重視</span>
+                <strong>{weightLabels[topPriority?.[0]]} {topPriority?.[1]}%</strong>
+              </div>
+            </div>
+            <div className="overview-conditions">
+              <span>
+                {form.commute_mode === "drive"
+                  ? "主要以汽車通勤"
+                  : "主要以大眾運輸／步行通勤"}
+              </span>
+              {form.needs_window && <span>需要對外窗</span>}
+              {form.needs_elevator && <span>需要電梯</span>}
+              {form.needs_parking && <span>需要停車</span>}
+              {form.needs_rental_subsidy && <span>需要可申請租補</span>}
+              {form.needs_convenience_store && <span>附近要有超商</span>}
+              {form.use_community_evidence && <span>查公開社群意見</span>}
+              {form.noise_preference === "quiet" && <span>希望安靜</span>}
+              {displayPreferences.map((preference) => (
+                <span key={preference}>{preference}</span>
+              ))}
+            </div>
+            {!!inheritedFields.length && (
+              <p className="inherited-note">
+                <TriangleAlert size={14} />
+                文字中未提到 {inheritedFields.join("、")}，目前沿用原設定。
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="advanced-toggle"
+            onClick={() => setAdvancedOpen((open) => !open)}
+            aria-expanded={advancedOpen}
+          >
+            <span>
+              <strong>調整詳細條件</strong>
+              <small>預算、設備、樓層與適配權重</small>
+            </span>
+            {advancedOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          {advancedOpen && (
+          <div className="advanced-settings">
           <div className="form-grid">
             <Field label="每月總預算" hint="包含管理費與預估水電">
               <div className="input-prefix"><span>NT$</span><input type="number" value={form.budget} onChange={(e) => update("budget", e.target.value)} /></div>
             </Field>
-            <Field label="通勤目的地">
+            <Field label="通勤目的地" hint="可輸入縣市＋行政區、支援的大學或地標">
               <input value={form.destination} onChange={(e) => update("destination", e.target.value)} />
+              {destinationResolving && (
+                <span className="destination-resolution loading">
+                  <LoaderCircle className="spin" size={13} />
+                  正在確認具體位置…
+                </span>
+              )}
+              {!destinationResolving && destinationResolution && (
+                <span className="destination-resolution resolved">
+                  <MapPin size={13} />
+                  已辨識：{destinationResolution.resolved_label}
+                  <small>
+                    {destinationResolution.source === "openstreetmap"
+                      ? "OpenStreetMap 實際座標"
+                      : "行政區規則"}
+                  </small>
+                </span>
+              )}
+              {!destinationResolving && destinationError && (
+                <span className="destination-resolution unresolved">
+                  <TriangleAlert size={13} />
+                  {destinationError}
+                </span>
+              )}
             </Field>
-            <Field label="最長通勤時間">
+            <Field
+              label="最長大眾運輸／步行時間"
+              hint="TDX 大眾運輸優先；無適合班次時採真實步行路網"
+            >
               <div className="input-suffix"><input type="number" value={form.max_commute_minutes} onChange={(e) => update("max_commute_minutes", e.target.value)} /><span>分鐘</span></div>
             </Field>
             <Field label="噪音偏好">
@@ -258,12 +1118,60 @@ export default function App() {
                 <option value="no_preference">沒有偏好</option>
               </select>
             </Field>
+            <Field
+              label="主要通勤方式"
+              hint="仍會同時計算其他可取得的交通方式供比較"
+            >
+              <select
+                value={form.commute_mode}
+                onChange={(e) => update("commute_mode", e.target.value)}
+              >
+                <option value="transit_walk">大眾運輸／步行</option>
+                <option value="drive">汽車駕駛</option>
+              </select>
+            </Field>
           </div>
 
           <div className="toggle-grid">
             <Toggle checked={form.needs_window} onChange={(v) => update("needs_window", v)} label="需要對外窗" />
             <Toggle checked={form.needs_elevator} onChange={(v) => update("needs_elevator", v)} label="一定要有電梯" />
             <Toggle checked={form.needs_convenience_store} onChange={(v) => update("needs_convenience_store", v)} label="附近需有便利商店" />
+            <Toggle checked={form.needs_parking} onChange={(v) => update("needs_parking", v)} label="需要附近停車場" />
+            <Toggle
+              checked={form.needs_rental_subsidy}
+              onChange={(v) => update("needs_rental_subsidy", v)}
+              label="需要可申請租金補貼"
+            />
+            <Toggle
+              checked={form.use_community_evidence}
+              onChange={(v) => update("use_community_evidence", v)}
+              label="查詢公開社群意見"
+            />
+          </div>
+
+          <div className="weights-card">
+            <div className="weights-heading">
+              <div>
+                <strong>你最在意什麼？</strong>
+                <span>鎖住不想變動的項目；調整其他項目時，未鎖權重會自動補足 100%</span>
+              </div>
+              <b>自訂適配分</b>
+            </div>
+            <div className="weights-grid">
+              {Object.keys(weightLabels).map((name) => (
+                <WeightControl
+                  key={name}
+                  name={name}
+                  value={form.weights[name]}
+                  locked={weightLocks[name]}
+                  max={100 - weightNames
+                    .filter((other) => other !== name && weightLocks[other])
+                    .reduce((sum, other) => sum + Number(form.weights[other]), 0)}
+                  onChange={updateWeight}
+                  onToggleLock={toggleWeightLock}
+                />
+              ))}
+            </div>
           </div>
 
           <div className="form-grid">
@@ -274,17 +1182,43 @@ export default function App() {
               <input value={preferenceText} onChange={(e) => setPreferenceText(e.target.value)} placeholder="採光良好、可開伙" />
             </Field>
           </div>
+          </div>
+          )}
 
           <button className="submit-button" disabled={loading}>
             {loading ? <><LoaderCircle className="spin" size={20} />Agents 分析中...</> : <><Sparkles size={20} />啟動 Multi-Agent 分析</>}
           </button>
+          <div className="listing-source">
+            <div>
+              <strong>目前整合 591＋好房網即時刊登</strong>
+              <span>Source Planning Agent 會依目的地與預算規劃搜尋，再跨平台去重與排名。</span>
+            </div>
+            <div className="listing-source-actions">
+              <a
+                className="source-link"
+                href={RENT_591_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                591 <ExternalLink size={16} />
+              </a>
+              <a
+                className="source-link"
+                href={HOUSEFUN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                好房網 <ExternalLink size={16} />
+              </a>
+            </div>
+          </div>
           {error && <p className="error">{error}</p>}
         </form>
 
         <AgentPipeline trace={data?.trace} loading={loading} />
 
         {data && (
-          <section className="results-section">
+          <section className="results-section" id="ranked-results">
             <div className="decision-summary">
               <div className="summary-icon"><Bot size={26} /></div>
               <div>
@@ -296,9 +1230,20 @@ export default function App() {
             <div className="results-heading">
               <div>
                 <span className="eyebrow">RANKED RESULTS</span>
-                <h2>房源推薦排名</h2>
+                <h2>
+                  {data.property_source === "multi"
+                    ? "多平台房源推薦排名"
+                    : data.property_source === "591"
+                      ? "591 房源推薦排名"
+                      : "房源推薦排名"}
+                </h2>
               </div>
-              <span>{data.results.length} 筆房源完成分析</span>
+              <div className="results-actions">
+                <span>{data.results.length} 筆房源完成分析</span>
+                <button type="button" className="map-button" onClick={openMap}>
+                  <MapPinned size={18} /> 查看地圖與超商
+                </button>
+              </div>
             </div>
             <div className="results-list">
               {data.results.map((item) => <ResultCard item={item} key={item.property.id} />)}
@@ -312,6 +1257,8 @@ export default function App() {
             <h3>Agent 團隊正在待命</h3>
             <p>設定需求後啟動分析，系統會同步展示每個 Agent 的分工與最終排名。</p>
           </section>
+        )}
+          </>
         )}
       </div>
       <footer>RentWise · Agentic AI Competition Demo · LangGraph × FastAPI × React</footer>

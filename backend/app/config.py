@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4.1-mini"
     frontend_origin: str = "http://localhost:5173"
+    tdx_client_id: str = ""
+    tdx_client_secret: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
