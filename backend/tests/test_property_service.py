@@ -120,3 +120,14 @@ def test_merge_excludes_parking_only_listing():
     ).model_copy(update={"description": "地下二樓汽車位月租"})
 
     assert merge_and_dedupe_properties([[parking]]) == []
+
+
+def test_merge_excludes_storage_only_listing():
+    storage = make_property(
+        "591-storage",
+        "591租屋",
+        "https://rent.591.com.tw/storage",
+        title="迷你置物空間出租",
+    ).model_copy(update={"description": "僅供置物，不得居住或過夜"})
+
+    assert merge_and_dedupe_properties([[storage]]) == []

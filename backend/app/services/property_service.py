@@ -1,31 +1,17 @@
-import json
 import re
 from concurrent.futures import ThreadPoolExecutor
-from functools import lru_cache
-from pathlib import Path
 
 from app.models.schemas import Property, PropertySourceLink, UserRequirements
 from app.services.housefun_service import (
     HousefunError,
     fetch_housefun_properties,
 )
-from app.services.listing_text_service import is_parking_only_listing
+from app.services.listing_text_service import is_non_habitable_listing
 from app.services.rent591_service import Rent591Error, fetch_591_properties
 from app.services.source_planning_service import (
     SourceSearchPlan,
     build_source_search_plan,
 )
-
-
-DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "properties.json"
-
-
-@lru_cache
-def load_properties() -> list[Property]:
-    with DATA_PATH.open("r", encoding="utf-8") as file:
-        data = json.load(file)
-    return [Property.model_validate(item) for item in data]
-
 
 def _dedupe_key(property_: Property) -> tuple[int, str]:
     normalized_address = re.sub(
@@ -102,10 +88,35 @@ def _merge_duplicate(primary: Property, duplicate: Property) -> Property:
         if True in subsidy_values
         else None
     )
+    listing_text = max(
+        (primary.listing_text, duplicate.listing_text),
+        key=len,
+    )
+    image_urls = list(
+        dict.fromkeys(
+            [
+                primary.image_url,
+                *primary.image_urls,
+                duplicate.image_url,
+                *duplicate.image_urls,
+            ]
+        )
+    )[:8]
     return primary.model_copy(
         update={
             **cost_updates,
             "rental_subsidy_eligible": rental_subsidy_eligible,
+            "listing_text": listing_text,
+            "image_url": image_urls[0],
+            "image_urls": image_urls,
+            "listing_text_source": (
+                "detail_page"
+                if "detail_page" in (
+                    primary.listing_text_source,
+                    duplicate.listing_text_source,
+                )
+                else "listing_card"
+            ),
             "source_name": source_names or primary.source_name,
             "source_links": links,
             "data_notes": list(
@@ -127,7 +138,7 @@ def merge_and_dedupe_properties(
     index_by_key: dict[tuple[int, str], int] = {}
     for group in source_groups:
         for property_ in group:
-            if is_parking_only_listing(
+            if is_non_habitable_listing(
                 property_.title,
                 "",
                 property_.description,
@@ -182,8 +193,6 @@ def load_properties_for_requirements(
     req: UserRequirements,
     plan: SourceSearchPlan | None = None,
 ) -> list[Property]:
-    if req.property_source == "demo":
-        return load_properties()
     if req.property_source == "591":
         planned_req = req.model_copy(
             update={

@@ -32,12 +32,11 @@ class UserRequirements(BaseModel):
     needs_convenience_store: bool = True
     max_floor_without_elevator: int = Field(3, ge=1, le=20)
     preferences: list[str] = Field(default_factory=list)
-    property_source: Literal["multi", "591", "demo"] = "multi"
+    property_source: Literal["multi", "591"] = "multi"
     weights: SuitabilityWeights = Field(default_factory=SuitabilityWeights)
     commute_mode: CommuteMode = "transit_walk"
     needs_parking: bool = False
     needs_rental_subsidy: bool = False
-    use_community_evidence: bool = False
 
 
 class RequirementParseRequest(BaseModel):
@@ -72,6 +71,22 @@ class DestinationResolveResponse(BaseModel):
 class PropertySourceLink(BaseModel):
     name: str
     url: str
+
+
+class ListingRequirementEvidence(BaseModel):
+    label: str
+    status: Literal["met", "unmet", "unknown"]
+    evidence: str
+    confidence: Literal["low", "medium", "high"]
+
+
+class NearbyAmenity(BaseModel):
+    id: str
+    title: str
+    address: str
+    latitude: float
+    longitude: float
+    kind: Literal["store", "parking"]
 
 
 class Property(BaseModel):
@@ -110,9 +125,13 @@ class Property(BaseModel):
     nearby: list[str]
     nearby_convenience_store_count: int | None = None
     nearest_convenience_store_meters: int | None = None
+    nearby_convenience_stores: list[NearbyAmenity] = Field(default_factory=list)
+    convenience_store_lookup_completed: bool = False
     nearby_data_source: str = ""
     nearby_parking_count: int | None = None
     nearest_parking_meters: int | None = None
+    nearby_parking_facilities: list[NearbyAmenity] = Field(default_factory=list)
+    parking_lookup_completed: bool = False
     rental_subsidy_eligible: bool | None = None
     vision_analyzed_by_ai: bool = False
     vision_window_visible: bool = False
@@ -123,8 +142,19 @@ class Property(BaseModel):
     features: list[str]
     risks: list[str]
     description: str
+    listing_text: str = Field("", exclude=True)
+    listing_text_source: Literal["listing_card", "detail_page"] = "listing_card"
+    listing_requirements_analyzed_by_ai: bool = False
+    listing_requirement_summary: str = ""
+    listing_requirement_checks: list[ListingRequirementEvidence] = Field(
+        default_factory=list
+    )
+    noise_analyzed_by_ai: bool = False
+    noise_evidence: str = ""
+    noise_confidence: Literal["low", "medium", "high"] | None = None
     image_url: str
-    source_name: str = "Demo"
+    image_urls: list[str] = Field(default_factory=list)
+    source_name: str = "未標示來源"
     source_url: str = ""
     source_links: list[PropertySourceLink] = Field(default_factory=list)
     data_notes: list[str] = Field(default_factory=list)
@@ -147,30 +177,6 @@ class AgentAssessment(BaseModel):
     checks: list[ConditionCheck] = Field(default_factory=list)
 
 
-class EvidenceSource(BaseModel):
-    title: str
-    url: str
-
-
-class CommunityFinding(BaseModel):
-    topic: str
-    sentiment: Literal["positive", "mixed", "negative", "no_evidence"]
-    scope: Literal["exact_property", "same_building", "nearby_area", "general_area"]
-    summary: str
-
-
-class CommunityEvidence(BaseModel):
-    status: Literal["found", "not_found", "unavailable"]
-    summary: str
-    confidence: Literal["low", "medium"]
-    searched_preferences: list[str]
-    findings: list[CommunityFinding] = Field(default_factory=list)
-    sources: list[EvidenceSource] = Field(default_factory=list)
-    disclaimer: str = (
-        "公開社群意見僅供參考，不能代替房東或租約確認。"
-    )
-
-
 class PropertyResult(BaseModel):
     rank: int
     property: Property
@@ -180,7 +186,6 @@ class PropertyResult(BaseModel):
     strengths: list[str]
     tradeoffs: list[str]
     assessments: dict[str, AgentAssessment]
-    community_evidence: CommunityEvidence | None = None
 
 
 class AgentTrace(BaseModel):
@@ -191,8 +196,8 @@ class AgentTrace(BaseModel):
 
 
 class RecommendationResponse(BaseModel):
-    mode: Literal["ai", "demo"]
-    property_source: Literal["multi", "591", "demo"]
+    mode: Literal["ai", "rules"]
+    property_source: Literal["multi", "591"]
     summary: str
     results: list[PropertyResult]
     trace: list[AgentTrace]
@@ -206,6 +211,10 @@ class MapPropertyInput(BaseModel):
     source_url: str = Field("", max_length=500)
     latitude: float | None = None
     longitude: float | None = None
+    nearby_convenience_stores: list[NearbyAmenity] = Field(default_factory=list)
+    convenience_store_lookup_completed: bool = False
+    nearby_parking_facilities: list[NearbyAmenity] = Field(default_factory=list)
+    parking_lookup_completed: bool = False
 
 
 class MapContextRequest(BaseModel):

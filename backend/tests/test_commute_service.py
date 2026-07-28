@@ -193,6 +193,10 @@ def test_enrich_commute_data_uses_map_store_results(monkeypatch):
     assert result.nearest_convenience_store_meters is not None
     assert result.nearest_convenience_store_meters < 500
     assert result.nearby_data_source == "OpenStreetMap"
+    assert result.convenience_store_lookup_completed is True
+    assert [store.id for store in result.nearby_convenience_stores] == [
+        "osm-node-1"
+    ]
     assert "便利商店" in result.nearby
 
 
@@ -248,3 +252,7 @@ def test_enrich_commute_data_uses_driving_and_parking(monkeypatch):
     assert result.driving_distance_km == 5.4
     assert result.nearby_parking_count == 1
     assert result.nearest_parking_meters is not None
+    assert result.parking_lookup_completed is True
+    assert [facility.id for facility in result.nearby_parking_facilities] == [
+        "osm-way-parking"
+    ]

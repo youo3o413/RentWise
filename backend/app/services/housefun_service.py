@@ -8,10 +8,11 @@ import httpx
 
 from app.models.schemas import Property, PropertySourceLink, UserRequirements
 from app.services.listing_text_service import (
-    is_parking_only_listing,
+    is_non_habitable_listing,
     parse_listing_costs,
     rental_subsidy_status,
 )
+from app.services.listing_detail_service import enrich_listing_detail_pages
 from app.services.map_service import _ssl_context
 from app.services.rent591_service import DEFAULT_IMAGE_URL
 from app.services.source_planning_service import SourceSearchPlan
@@ -166,7 +167,7 @@ def parse_housefun_listings(html: str, limit: int = 8) -> list[Property]:
         title = detail_link.attrs.get("title") or detail_link.text()
         address = address_node.text()
         full_text = item.text()
-        if is_parking_only_listing(title, "", full_text):
+        if is_non_habitable_listing(title, "", full_text):
             continue
         rent_match = re.search(r"租金[：:]?\s*([\d,]+)", full_text)
         rent = _number(rent_match.group(1)) if rent_match else 0
@@ -180,15 +181,12 @@ def parse_housefun_listings(html: str, limit: int = 8) -> list[Property]:
         floor = int(floor_match.group(1)) if floor_match else None
         room_match = re.search(r"(\d+)房(?:\([^)]*\))?(\d+)廳(\d+)衛", full_text)
 
-        image_node = next(
-            (
-                node
-                for node in item.descendants()
-                if node.tag == "img" and node.attrs.get("src", "").startswith("http")
-            ),
-            None,
-        )
-        image_url = image_node.attrs["src"] if image_node else DEFAULT_IMAGE_URL
+        image_urls = list(dict.fromkeys(
+            node.attrs["src"]
+            for node in item.descendants()
+            if node.tag == "img" and node.attrs.get("src", "").startswith("http")
+        ))
+        image_url = image_urls[0] if image_urls else DEFAULT_IMAGE_URL
 
         latitude = longitude = None
         map_link = next(
@@ -245,7 +243,9 @@ def parse_housefun_listings(html: str, limit: int = 8) -> list[Property]:
                 features=features,
                 risks=["列表未完整揭露費用與設備，簽約前需確認"],
                 description=full_text[:500],
+                listing_text=full_text[:12000],
                 image_url=image_url,
+                image_urls=image_urls,
                 source_name="好房網快租",
                 source_url=source_url,
                 source_links=[
@@ -318,5 +318,5 @@ def fetch_housefun_properties(
             seen.add(property_.id)
             properties.append(property_)
             if len(properties) >= limit:
-                return properties
-    return properties
+                return enrich_listing_detail_pages(properties, limit=limit)
+    return enrich_listing_detail_pages(properties, limit=limit)

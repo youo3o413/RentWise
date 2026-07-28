@@ -17,7 +17,75 @@ def test_health():
     assert response.json()["status"] == "ok"
 
 
-def test_recommendation_returns_ranked_properties():
+def test_recommendation_returns_ranked_live_properties(monkeypatch):
+    def fake_invoke(state):
+        assert state["requirements"].property_source == "multi"
+        assessment = {
+            "agent": "Test Agent",
+            "property_id": "listing-1",
+            "score": 80,
+            "summary": "測試分析",
+            "positives": [],
+            "concerns": [],
+            "metrics": {},
+            "checks": [],
+        }
+        return {
+            "mode": "rules",
+            "summary": "測試決策說明",
+            "ranked_results": [
+                {
+                    "rank": 1,
+                    "property": {
+                        "id": "listing-1",
+                        "title": "即時房源",
+                        "address": "台北市文山區",
+                        "rent": 12000,
+                        "management_fee": 0,
+                        "water_fee": 0,
+                        "electricity_rate": 5,
+                        "estimated_kwh": 100,
+                        "commute_minutes": 20,
+                        "has_window": True,
+                        "window_type": "對外窗",
+                        "has_elevator": None,
+                        "floor": 2,
+                        "noise_level": None,
+                        "nearby": [],
+                        "features": [],
+                        "risks": [],
+                        "description": "",
+                        "image_url": "https://example.com/listing.jpg",
+                        "source_name": "591租屋",
+                    },
+                    "total_score": 80,
+                    "estimated_monthly_cost": 12500,
+                    "recommendation": "建議比較後看房。",
+                    "strengths": [],
+                    "tradeoffs": [],
+                    "assessments": {
+                        "location": assessment,
+                        "cost": assessment,
+                        "property": assessment,
+                        "suitability": assessment,
+                    },
+                }
+            ],
+            "trace": [
+                {
+                    "agent": "Source Planning Agent",
+                    "status": "completed",
+                    "message": "已完成即時來源規劃",
+                    "property_count": 1,
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        main_module.rentwise_graph,
+        "invoke",
+        fake_invoke,
+    )
     response = client.post(
         "/api/recommend",
         json={
@@ -36,17 +104,29 @@ def test_recommendation_returns_ranked_properties():
                 "property": 20,
                 "noise": 10,
             },
-            "property_source": "demo",
+            "property_source": "multi",
         },
     )
     assert response.status_code == 200
     body = response.json()
-    assert len(body["results"]) == 5
-    assert body["property_source"] == "demo"
+    assert len(body["results"]) == 1
+    assert body["property_source"] == "multi"
+    assert body["mode"] == "rules"
     assert body["results"][0]["rank"] == 1
-    assert len(body["trace"]) >= 7
     assert body["trace"][0]["agent"] == "Source Planning Agent"
-    assert body["trace"][0]["status"] == "skipped"
+    assert body["trace"][0]["status"] == "completed"
+
+
+def test_removed_demo_property_source_is_rejected():
+    response = client.post(
+        "/api/recommend",
+        json={
+            "destination": "政治大學",
+            "property_source": "demo",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_parse_requirements_endpoint(monkeypatch):
@@ -70,9 +150,7 @@ def test_parse_requirements_endpoint(monkeypatch):
         "/api/parse-requirements",
         json={
             "text": "輔大附近，通勤最重要",
-            "current": UserRequirements(
-                property_source="demo"
-            ).model_dump(),
+            "current": UserRequirements(property_source="591").model_dump(),
         },
     )
 

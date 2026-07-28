@@ -4,12 +4,20 @@ from app.agents import ai_enrichment
 from app.agents.ai_enrichment import (
     CostEstimateBatch,
     CostEstimateItem,
+    ListingRequirementBatch,
+    ListingRequirementCheckItem,
+    ListingRequirementItem,
+    ListingUseBatch,
+    ListingUseItem,
     PropertyVisionBatch,
     PropertyVisionItem,
     analyze_property_images,
     apply_cost_estimate,
+    apply_listing_requirement_analysis,
     apply_property_vision,
+    classify_listing_uses,
     estimate_property_costs,
+    interpret_listing_requirements,
 )
 from app.models.schemas import Property, UserRequirements
 
@@ -132,3 +140,133 @@ def test_property_agent_sends_image_and_never_treats_unseen_window_as_no_window(
     assert enriched.vision_window_visible is False
     assert enriched.space_impression == "compact"
     assert enriched.vision_confidence == "low"
+
+
+def test_property_agent_semantically_interprets_full_listing_text(monkeypatch):
+    parsed = ListingRequirementBatch(
+        analyses=[
+            ListingRequirementItem(
+                property_id="listing-1",
+                summary="刊登明確禁寵、接受租補，並表示環境安靜。",
+                checks=[
+                    ListingRequirementCheckItem(
+                        label="可養貓",
+                        status="unmet",
+                        evidence="房東註明謝絕毛小孩",
+                        confidence="high",
+                    ),
+                    ListingRequirementCheckItem(
+                        label="租金補貼",
+                        status="met",
+                        evidence="可協助申請中央租金補貼",
+                        confidence="high",
+                    ),
+                ],
+                noise_assessment_performed=True,
+                noise_level="low",
+                noise_evidence="原文寫「住宅巷內，夜間環境安靜」",
+                noise_confidence="high",
+            )
+        ]
+    )
+
+    class FakeResponses:
+        def parse(self, **kwargs):
+            assert kwargs["text_format"] is ListingRequirementBatch
+            assert "web_search" not in str(kwargs.get("tools", ""))
+            assert "謝絕毛小孩" in kwargs["input"]
+            return SimpleNamespace(output_parsed=parsed)
+
+    class FakeOpenAI:
+        def __init__(self, api_key):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(ai_enrichment, "get_settings", _mock_settings)
+    monkeypatch.setattr(ai_enrichment, "OpenAI", FakeOpenAI)
+    property_ = _property(
+        listing_text=(
+            "房東註明謝絕毛小孩，但可協助申請中央租金補貼。"
+            "住宅巷內，夜間環境安靜。"
+        ),
+        listing_text_source="detail_page",
+    )
+    requirements = UserRequirements(
+        needs_window=False,
+        needs_rental_subsidy=True,
+        preferences=["可養貓"],
+    )
+
+    analyses, _ = interpret_listing_requirements(requirements, [property_])
+    enriched = apply_listing_requirement_analysis(
+        property_,
+        analyses[property_.id],
+    )
+
+    assert enriched.listing_requirements_analyzed_by_ai is True
+    assert enriched.rental_subsidy_eligible is True
+    assert enriched.noise_analyzed_by_ai is True
+    assert enriched.noise_level == "low"
+    assert enriched.noise_confidence == "high"
+    assert "夜間環境安靜" in enriched.noise_evidence
+    assert next(
+        check for check in enriched.listing_requirement_checks
+        if check.label == "可養貓"
+    ).status == "unmet"
+
+
+def test_property_noise_ai_does_not_guess_without_reliable_evidence():
+    property_ = _property(noise_level="low")
+    analysis = ListingRequirementItem(
+        property_id="listing-1",
+        summary="刊登沒有提供可核對的安靜程度資訊。",
+        checks=[],
+        noise_assessment_performed=True,
+        noise_level="unknown",
+        noise_evidence="刊登未提及噪音環境",
+        noise_confidence="low",
+    )
+
+    enriched = apply_listing_requirement_analysis(property_, analysis)
+
+    assert enriched.noise_level == "low"
+    assert enriched.noise_analyzed_by_ai is True
+    assert enriched.noise_confidence == "low"
+
+
+def test_ai_classifies_storage_listing_as_not_habitable(monkeypatch):
+    parsed = ListingUseBatch(
+        analyses=[
+            ListingUseItem(
+                property_id="listing-1",
+                classification="not_habitable",
+                property_type="置物空間",
+                evidence="僅供堆放攝影器材，禁止居住及過夜",
+                confidence="high",
+            )
+        ]
+    )
+
+    class FakeResponses:
+        def parse(self, **kwargs):
+            assert kwargs["text_format"] is ListingUseBatch
+            assert "禁止居住及過夜" in kwargs["input"]
+            return SimpleNamespace(output_parsed=parsed)
+
+    class FakeOpenAI:
+        def __init__(self, api_key):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(ai_enrichment, "get_settings", _mock_settings)
+    monkeypatch.setattr(ai_enrichment, "OpenAI", FakeOpenAI)
+    analyses, message = classify_listing_uses(
+        [
+            _property(
+                title="攝影工作空間",
+                listing_text="僅供堆放攝影器材，禁止居住及過夜。",
+                listing_text_source="detail_page",
+            )
+        ]
+    )
+
+    assert analyses["listing-1"].classification == "not_habitable"
+    assert "排除 1 筆" in message

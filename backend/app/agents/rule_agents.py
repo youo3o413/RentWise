@@ -123,13 +123,24 @@ def location_assessment(property_: Property, req: UserRequirements) -> AgentAsse
         else:
             concerns.append("附近停車資訊待確認，不納入分數")
 
-    component_weights = {"commute": 1.0}
+    active_components = ["commute"]
     if req.needs_convenience_store and store_available:
-        component_weights["store"] = 0.5
-        component_weights["commute"] = 0.5
-    score = (
-        (commute_score or 0) * component_weights["commute"]
-        + (store_score or 0) * component_weights.get("store", 0)
+        active_components.append("store")
+    if req.needs_parking and parking_available:
+        active_components.append("parking")
+    component_weight = 1 / len(active_components)
+    component_weights = {
+        name: component_weight
+        for name in active_components
+    }
+    component_scores = {
+        "commute": commute_score,
+        "store": store_score,
+        "parking": parking_score,
+    }
+    score = sum(
+        (component_scores[name] or 0) * weight
+        for name, weight in component_weights.items()
     )
 
     return AgentAssessment(
@@ -391,6 +402,7 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
             property_.description,
             *property_.features,
             property_.vision_summary,
+            property_.listing_text,
         ]
     )
     for preference in req.preferences:
@@ -428,7 +440,17 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
             "隔音良好": ("隔音佳", "隔音良好", "氣密窗"),
         }.get(preference, (preference,))
         negative_terms = (
-            ("不可養", "禁養", "禁止寵物", "謝絕寵物")
+            (
+                "不可養",
+                "不可寵物",
+                "不可寵",
+                "禁養",
+                "禁寵",
+                "禁止寵物",
+                "禁止飼養",
+                "不得飼養",
+                "謝絕寵物",
+            )
             if "養貓" in preference or "寵物" in preference
             else ("隔音差", "隔音不好")
             if "隔音" in preference
@@ -451,6 +473,28 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
                 ),
             )
         )
+
+    check_indexes = {check.label: index for index, check in enumerate(checks)}
+    for ai_check in property_.listing_requirement_checks:
+        ai_evidence = (
+            f"AI 語意判讀刊登原文：{ai_check.evidence}"
+            f"（可信度 {ai_check.confidence}）"
+        )
+        replacement = ConditionCheck(
+            label=ai_check.label,
+            status=ai_check.status,
+            evidence=ai_evidence,
+        )
+        existing_index = check_indexes.get(ai_check.label)
+        reliable = (
+            ai_check.confidence in {"medium", "high"}
+            and ai_check.status in {"met", "unmet"}
+        )
+        if existing_index is None:
+            checks.append(replacement)
+            check_indexes[ai_check.label] = len(checks) - 1
+        elif reliable or checks[existing_index].status == "unknown":
+            checks[existing_index] = replacement
 
     met_count = sum(check.status == "met" for check in checks)
     unmet_count = sum(check.status == "unmet" for check in checks)
@@ -505,6 +549,11 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
                 if property_.vision_analyzed_by_ai
                 else ""
             )
+            + (
+                " AI 已語意判讀完整刊登文字。"
+                if property_.listing_requirements_analyzed_by_ai
+                else ""
+            )
         ),
         positives=list(dict.fromkeys(positives)),
         concerns=list(dict.fromkeys(concerns)),
@@ -517,8 +566,22 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
             "data_completeness": data_completeness,
             "score_available": known_count > 0,
             "formula_version": "RentWise Scoring v1.2",
-            "ai_used": property_.vision_analyzed_by_ai,
-            "ai_confidence": property_.vision_confidence or "not_used",
+            "ai_used": (
+                property_.vision_analyzed_by_ai
+                or property_.listing_requirements_analyzed_by_ai
+            ),
+            "ai_confidence": (
+                property_.vision_confidence
+                or (
+                    "medium"
+                    if property_.listing_requirements_analyzed_by_ai
+                    else "not_used"
+                )
+            ),
+            "listing_text_source": property_.listing_text_source,
+            "listing_requirements_analyzed_by_ai": (
+                property_.listing_requirements_analyzed_by_ai
+            ),
             "space_impression": property_.space_impression,
             "listing_area_ping": (
                 property_.listing_area_ping
@@ -545,7 +608,7 @@ def suitability_assessment(
         and req.noise_preference != "no_preference"
     )
     if property_.noise_level is None:
-        concerns.append("刊登資料不足，噪音權重不納入並重新分配")
+        concerns.append("刊登資料不足，安靜程度不納入並重新分配權重")
     elif req.noise_preference == "quiet":
         if property_.noise_level == "low":
             noise_score = 100
@@ -559,7 +622,16 @@ def suitability_assessment(
     elif req.noise_preference == "balanced":
         noise_score = {"low": 95, "medium": 85, "high": 55}[property_.noise_level]
     else:
-        concerns.append("使用者未設定噪音偏好，噪音權重不納入")
+        concerns.append("使用者未設定安靜程度，此項不納入權重")
+    if property_.noise_analyzed_by_ai and property_.noise_evidence:
+        noise_evidence_text = (
+            f"Property Agent AI 刊登證據：{property_.noise_evidence}"
+            f"（可信度 {property_.noise_confidence}）"
+        )
+        if property_.noise_level == "low":
+            positives.append(noise_evidence_text)
+        else:
+            concerns.append(noise_evidence_text)
 
     original_weights = {
         "location": raw_weights.location,
@@ -657,5 +729,14 @@ def suitability_assessment(
             "formula_version": "RentWise Scoring v1.2",
             "noise_score": noise_score,
             "noise_level": property_.noise_level or "unknown",
+            "noise_evidence_source": (
+                "property_agent_openai"
+                if property_.noise_analyzed_by_ai
+                else "listing_rules"
+                if property_.noise_level is not None
+                else "unknown"
+            ),
+            "noise_evidence": property_.noise_evidence or "未取得明確刊登證據",
+            "noise_confidence": property_.noise_confidence or "not_used",
         },
     )

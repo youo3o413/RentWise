@@ -11,10 +11,11 @@ import certifi
 
 from app.models.schemas import Property, PropertySourceLink, UserRequirements
 from app.services.listing_text_service import (
-    is_parking_only_listing,
+    is_non_habitable_listing,
     parse_listing_costs,
     rental_subsidy_status,
 )
+from app.services.listing_detail_service import enrich_listing_detail_pages
 
 
 RENT_591_LIST_URL = "https://rent.591.com.tw/list"
@@ -312,7 +313,7 @@ def _listing_to_property(node: HtmlNode, destination: str = "") -> Property | No
 
     home_text = info_nodes[0].text()
     listing_text = node.text()
-    if is_parking_only_listing(title, home_text, listing_text):
+    if is_non_habitable_listing(title, home_text, listing_text):
         return None
     address = info_nodes[1].text()
     distance_text = info_nodes[2].text()
@@ -338,16 +339,13 @@ def _listing_to_property(node: HtmlNode, destination: str = "") -> Property | No
     ]
     combined = " ".join([title, home_text, address, " ".join(tags), listing_text])
 
-    image_node = next(
-        (
-            item
-            for item in node.descendants()
-            if item.tag == "img"
-            and item.attrs.get("data-src", "").startswith("https://")
-        ),
-        None,
-    )
-    image_url = image_node.attrs["data-src"] if image_node else DEFAULT_IMAGE_URL
+    image_urls = list(dict.fromkeys(
+        item.attrs.get("data-src") or item.attrs.get("src")
+        for item in node.descendants()
+        if item.tag == "img"
+        and (item.attrs.get("data-src") or item.attrs.get("src", "")).startswith("http")
+    ))
+    image_url = image_urls[0] if image_urls else DEFAULT_IMAGE_URL
 
     has_window = (
         True
@@ -411,7 +409,9 @@ def _listing_to_property(node: HtmlNode, destination: str = "") -> Property | No
         features=features,
         risks=risks,
         description=f"{home_text}；{distance_text}",
+        listing_text=listing_text[:12000],
         image_url=image_url,
+        image_urls=image_urls,
         source_name="591租屋",
         source_url=source_url,
         source_links=[
@@ -480,4 +480,4 @@ def fetch_591_properties(req: UserRequirements, limit: int = 12) -> list[Propert
     )
     if not properties:
         raise Rent591Error("591 沒有回傳可分析的房源，可能暫時限制了自動存取。")
-    return properties
+    return enrich_listing_detail_pages(properties, limit=limit)

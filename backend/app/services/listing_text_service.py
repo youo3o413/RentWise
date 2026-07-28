@@ -48,6 +48,14 @@ PARKING_ONLY_PATTERNS = (
     r"停車位(?:出租|招租|月租)",
     r"(?:坡道平面|坡道機械|升降機械)車位",
 )
+NON_HABITABLE_PATTERNS = (
+    r"(?:置物|儲物)(?:空間|室|間)(?:出租|招租|月租)?",
+    r"(?:出租|招租|月租)(?:置物|儲物)(?:空間|室|間)",
+    r"(?:迷你倉|個人倉|倉儲空間|倉庫)(?:出租|招租|月租)?",
+    r"(?:出租|招租|月租)(?:迷你倉|個人倉|倉儲空間|倉庫)",
+    r"僅供(?:置物|儲物|倉儲|堆放)",
+    r"(?:禁止|不可|不得)(?:居住|過夜|住宿)",
+)
 
 
 @dataclass(frozen=True)
@@ -95,6 +103,30 @@ def is_parking_only_listing(title: str, category: str = "", text: str = "") -> b
     )
     return not has_dwelling and (
         category_is_parking or title_is_parking or text_is_clearly_parking
+    )
+
+
+def is_non_habitable_listing(
+    title: str,
+    category: str = "",
+    text: str = "",
+) -> bool:
+    if is_parking_only_listing(title, category, text):
+        return True
+    compact_title = re.sub(r"\s+", "", title or "")
+    compact_category = re.sub(r"\s+", "", category or "")
+    compact_text = re.sub(r"\s+", "", text or "")
+    heading = f"{compact_title}{compact_category}"
+    has_dwelling_heading = any(
+        re.search(pattern, heading)
+        for pattern in DWELLING_PATTERNS
+    )
+    if any(re.search(pattern, heading) for pattern in NON_HABITABLE_PATTERNS):
+        return not has_dwelling_heading
+    return (
+        not has_dwelling_heading
+        and any(re.search(pattern, compact_text) for pattern in NON_HABITABLE_PATTERNS)
+        and not any(re.search(pattern, compact_text) for pattern in DWELLING_PATTERNS)
     )
 
 

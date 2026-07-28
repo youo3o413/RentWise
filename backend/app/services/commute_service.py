@@ -2,7 +2,7 @@ import math
 
 import httpx
 
-from app.models.schemas import Property
+from app.models.schemas import NearbyAmenity, Property
 from app.services.map_service import (
     MAP_USER_AGENT,
     _distance_meters,
@@ -61,7 +61,7 @@ def _matrix_commutes(
         },
         headers={
             "User-Agent": MAP_USER_AGENT,
-            "X-Client-Id": "rentwise-student-demo",
+            "X-Client-Id": "rentwise-student-project",
         },
         timeout=20,
         verify=_ssl_context(),
@@ -210,43 +210,79 @@ def enrich_commute_data(
             transfers = None
             method = "地理距離步行推估"
 
-        store_distances = sorted(
-            round(
-                _distance_meters(
+        nearby_stores = sorted(
+            [
+                (
+                round(
+                    _distance_meters(
+                        point.latitude,
+                        point.longitude,
+                        store.latitude,
+                        store.longitude,
+                    )
+                ),
+                store,
+                )
+                for store in stores
+                if _distance_meters(
                     point.latitude,
                     point.longitude,
                     store.latitude,
                     store.longitude,
-                )
-            )
-            for store in stores
-            if _distance_meters(
-                point.latitude,
-                point.longitude,
-                store.latitude,
-                store.longitude,
-            ) <= 500
+                ) <= 500
+            ],
+            key=lambda item: item[0],
         )
-        nearby = list(property_.nearby)
-        if store_distances and "便利商店" not in nearby:
-            nearby.append("便利商店")
-        parking_distances = sorted(
-            round(
-                _distance_meters(
+        store_distances = [distance for distance, _ in nearby_stores]
+        nearby_store_points = [
+            NearbyAmenity(
+                id=store.id,
+                title=store.title,
+                address=store.address,
+                latitude=store.latitude,
+                longitude=store.longitude,
+                kind="store",
+            )
+            for _, store in nearby_stores
+        ]
+        nearby_parking = sorted(
+            [
+                (
+                round(
+                    _distance_meters(
+                        point.latitude,
+                        point.longitude,
+                        parking.latitude,
+                        parking.longitude,
+                    )
+                ),
+                parking,
+                )
+                for parking in parking_facilities
+                if _distance_meters(
                     point.latitude,
                     point.longitude,
                     parking.latitude,
                     parking.longitude,
-                )
-            )
-            for parking in parking_facilities
-            if _distance_meters(
-                point.latitude,
-                point.longitude,
-                parking.latitude,
-                parking.longitude,
-            ) <= 500
+                ) <= 500
+            ],
+            key=lambda item: item[0],
         )
+        parking_distances = [distance for distance, _ in nearby_parking]
+        nearby_parking_points = [
+            NearbyAmenity(
+                id=parking.id,
+                title=parking.title,
+                address=parking.address,
+                latitude=parking.latitude,
+                longitude=parking.longitude,
+                kind="parking",
+            )
+            for _, parking in nearby_parking
+        ]
+        nearby = list(property_.nearby)
+        if store_distances and "便利商店" not in nearby:
+            nearby.append("便利商店")
 
         enriched.append(
             property_.model_copy(
@@ -284,6 +320,8 @@ def enrich_commute_data(
                         if store_distances
                         else None
                     ),
+                    "nearby_convenience_stores": nearby_store_points,
+                    "convenience_store_lookup_completed": store_lookup_completed,
                     "nearby_data_source": (
                         "OpenStreetMap"
                         if store_lookup_completed
@@ -299,6 +337,8 @@ def enrich_commute_data(
                         if parking_distances
                         else None
                     ),
+                    "nearby_parking_facilities": nearby_parking_points,
+                    "parking_lookup_completed": parking_lookup_completed,
                 }
             )
         )

@@ -11,7 +11,6 @@ from app.agents.requirement_agent import (
     parse_natural_language_requirements,
 )
 from app.models.schemas import (
-    Property,
     PropertyResult,
     MapContextRequest,
     MapContextResponse,
@@ -22,7 +21,6 @@ from app.models.schemas import (
     RequirementParseResponse,
     UserRequirements,
 )
-from app.services.property_service import load_properties
 from app.services.rent591_service import Rent591Error
 from app.services.map_service import build_map_context
 from app.services.destination_service import resolve_destination
@@ -56,11 +54,6 @@ def health() -> dict[str, str | bool]:
         "openai_enabled": bool(settings.openai_api_key),
         "model": settings.openai_model,
     }
-
-
-@app.get("/api/properties", response_model=list[Property])
-def properties() -> list[Property]:
-    return load_properties()
 
 
 @app.post(

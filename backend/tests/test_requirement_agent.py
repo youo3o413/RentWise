@@ -16,7 +16,7 @@ def test_merge_intent_preserves_unspecified_form_values():
         destination="政治大學",
         needs_elevator=False,
         preferences=["採光良好"],
-        property_source="demo",
+        property_source="591",
     )
     intent = ParsedRequirementIntent(
         destination="輔仁大學",
@@ -36,7 +36,7 @@ def test_merge_intent_preserves_unspecified_form_values():
     assert result.weights.location == 60
     assert result.weights.cost == 20
     assert result.weights.property == 25
-    assert result.property_source == "demo"
+    assert result.property_source == "591"
 
 
 def test_requirement_agent_uses_structured_response(monkeypatch):
@@ -71,7 +71,7 @@ def test_requirement_agent_uses_structured_response(monkeypatch):
 
     result = parse_natural_language_requirements(
         "台大附近一萬六，要有超商",
-        UserRequirements(property_source="demo"),
+        UserRequirements(property_source="591"),
     )
 
     assert result.mode == "ai"

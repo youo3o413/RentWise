@@ -1,5 +1,6 @@
 from app.services.listing_text_service import (
     is_parking_only_listing,
+    is_non_habitable_listing,
     parse_listing_costs,
     rental_subsidy_status,
 )
@@ -31,3 +32,9 @@ def test_parking_filter_keeps_homes_that_include_a_parking_space():
     assert is_parking_only_listing("坡道平面車位出租", "車位") is True
     assert is_parking_only_listing("大樓地下汽車位月租", "") is True
     assert is_parking_only_listing("三房住家附平面車位", "整層住家") is False
+
+
+def test_non_habitable_filter_excludes_storage_but_keeps_home_with_storage():
+    assert is_non_habitable_listing("迷你置物空間出租", "置物間") is True
+    assert is_non_habitable_listing("地下室僅供堆放物品", "") is True
+    assert is_non_habitable_listing("兩房住家附儲藏室", "整層住家") is False

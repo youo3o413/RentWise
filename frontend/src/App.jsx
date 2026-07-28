@@ -52,7 +52,6 @@ const initialForm = {
   commute_mode: "transit_walk",
   needs_parking: false,
   needs_rental_subsidy: false,
-  use_community_evidence: false,
 };
 
 const agentMeta = {
@@ -62,8 +61,7 @@ const agentMeta = {
   "Cost Agent": { icon: CircleDollarSign, label: "真實生活成本估算" },
   "Property Agent": { icon: Home, label: "房況與設備檢查" },
   "Suitability Agent": { icon: ShieldCheck, label: "個人適配度評估" },
-  "Community Evidence Agent": { icon: Bot, label: "公開社群意見查證" },
-  "Comparison Agent": { icon: Bot, label: "跨房源比較決策" },
+  "Decision Explanation Agent": { icon: Bot, label: "依既定排名產生決策說明" },
 };
 
 function Field({ label, children, hint }) {
@@ -94,7 +92,7 @@ const weightLabels = {
   location: "通勤與生活圈",
   cost: "每月成本",
   property: "房屋條件",
-  noise: "噪音偏好",
+  noise: "安靜程度",
 };
 
 const requirementFieldLabels = {
@@ -102,7 +100,7 @@ const requirementFieldLabels = {
   destination: "目的地",
   max_commute_minutes: "通勤上限",
   needs_window: "對外窗",
-  noise_preference: "噪音偏好",
+  noise_preference: "安靜程度",
   needs_elevator: "電梯",
   needs_convenience_store: "附近超商",
   max_floor_without_elevator: "樓層上限",
@@ -111,7 +109,6 @@ const requirementFieldLabels = {
   commute_mode: "通勤方式",
   needs_parking: "停車需求",
   needs_rental_subsidy: "租金補貼",
-  use_community_evidence: "公開社群查證",
 };
 
 const weightNames = Object.keys(weightLabels);
@@ -296,7 +293,7 @@ function AssessmentCalculation({ assessment, assessments }) {
       location: "Location",
       cost: "Cost",
       property: "Property",
-      noise: "噪音",
+      noise: "安靜程度",
     };
     const rawScores = {
       location: assessments.location?.score,
@@ -310,9 +307,12 @@ function AssessmentCalculation({ assessment, assessments }) {
         `${labels[key]} ${Number(rawScores[key]).toFixed(1)} × ${(Number(metrics[`${key}_weight`]) * 100).toFixed(1)}%`
       ));
     calculation = `${parts.join(" ＋ ")} ＝ ${score} 分`;
-    explanation = metrics.qualified === false
+    const baseExplanation = metrics.qualified === false
       ? `但明確違反必要條件：${metrics.disqualifying_conflicts}，因此標示不合格`
       : `依可取得資料計算；證據涵蓋原權重 ${metrics.evidence_coverage_percent}%`;
+    explanation = metrics.noise_evidence_source === "property_agent_openai"
+      ? `${baseExplanation}；安靜證據：${metrics.noise_evidence}`
+      : baseExplanation;
   } else {
     return null;
   }
@@ -356,7 +356,7 @@ function ScoreBreakdown({ item }) {
     },
     {
       key: "noise",
-      label: "噪音偏好",
+      label: "安靜程度",
       score: metrics.noise_score,
       available: metrics.noise_available,
     },
@@ -437,63 +437,6 @@ function ScoreBreakdown({ item }) {
   );
 }
 
-function CommunityEvidenceCard({ evidence }) {
-  if (!evidence) return null;
-  return (
-    <div className="community-evidence">
-      <div>
-        <Bot size={16} />
-        <strong>公開社群參考</strong>
-        <span>
-          {evidence.sources.length} 個來源 · 可信度：
-          {evidence.confidence === "medium" ? "中" : "低"}
-        </span>
-      </div>
-      <p>{evidence.summary}</p>
-      {!!evidence.findings?.length && (
-        <div className="community-findings">
-          {evidence.findings.map((finding) => (
-            <div className={`community-finding ${finding.sentiment}`} key={`${finding.topic}-${finding.summary}`}>
-              <strong>{finding.topic}</strong>
-              <span>
-                {{
-                  positive: "正面",
-                  mixed: "意見不一",
-                  negative: "負面",
-                  no_evidence: "尚無證據",
-                }[finding.sentiment]}：{finding.summary}
-              </span>
-              <small>
-                {{
-                  exact_property: "同一房源",
-                  same_building: "同棟社區",
-                  nearby_area: "附近街區",
-                  general_area: "一般生活圈",
-                }[finding.scope]}
-              </small>
-            </div>
-          ))}
-        </div>
-      )}
-      {!!evidence.sources.length && (
-        <div className="evidence-links">
-          {evidence.sources.map((source) => (
-            <a
-              href={source.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              key={source.url}
-            >
-              {source.title}<ExternalLink size={12} />
-            </a>
-          ))}
-        </div>
-      )}
-      <small>{evidence.disclaimer}</small>
-    </div>
-  );
-}
-
 const conditionSymbols = {
   met: "✓",
   unmet: "×",
@@ -508,7 +451,7 @@ function PropertyConditionStrip({ assessment }) {
   return (
     <div className="condition-strip" aria-label="房屋條件核對">
       <strong>房屋條件</strong>
-      {checks.slice(0, 4).map((check) => (
+      {checks.map((check) => (
         <span
           className={`condition-chip ${check.status}`}
           key={check.label}
@@ -517,7 +460,6 @@ function PropertyConditionStrip({ assessment }) {
           <i>{conditionSymbols[check.status]}</i>{check.label}
         </span>
       ))}
-      {checks.length > 4 && <small>＋{checks.length - 4}</small>}
       <small>資料完整 {assessment.metrics.data_completeness}%</small>
     </div>
   );
@@ -525,13 +467,33 @@ function PropertyConditionStrip({ assessment }) {
 
 function ResultCard({ item }) {
   const [open, setOpen] = useState(item.rank === 1);
+  const [activeImage, setActiveImage] = useState(0);
   const p = item.property;
+  const images = [...new Set([p.image_url, ...(p.image_urls || [])].filter(Boolean))].slice(0, 6);
   const propertyAssessment = item.assessments.property;
   const qualified = item.assessments.suitability.metrics.qualified !== false;
   return (
     <article className={`result-card ${item.rank === 1 && qualified ? "winner" : ""} ${qualified ? "" : "ineligible"}`}>
       <div className="rank-badge">#{item.rank}</div>
-      <img src={p.image_url} alt={p.title} />
+      <div className="property-gallery">
+        <img className="property-main-image" src={images[activeImage]} alt={`${p.title} 房源照片 ${activeImage + 1}`} />
+        {images.length > 1 && (
+          <div className="property-thumbnails" aria-label="房源照片">
+            {images.map((image, index) => (
+              <button
+                type="button"
+                className={index === activeImage ? "active" : ""}
+                onClick={() => setActiveImage(index)}
+                aria-label={`查看第 ${index + 1} 張房源照片`}
+                aria-pressed={index === activeImage}
+                key={image}
+              >
+                <img src={image} alt="" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="result-main">
         <div className="result-heading">
           <div>
@@ -639,8 +601,6 @@ function ResultCard({ item }) {
             <ul>{item.tradeoffs.slice(0, 3).map((x) => <li key={x}>{x}</li>)}</ul>
           </div>
         </div>
-        <CommunityEvidenceCard evidence={item.community_evidence} />
-
         <button className="detail-button" onClick={() => setOpen(!open)}>
           查看各 Agent 分析 {open ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
         </button>
@@ -764,7 +724,7 @@ export default function App() {
     if (data?.property_source === "591") return "591 live · Rules";
     if (data?.mode === "ai") return "OpenAI AI mode";
     if (health?.openai_enabled) return "OpenAI ready";
-    return "Demo rules mode";
+    return "Rules mode";
   }, [data, health]);
   const normalizedWeights = useMemo(() => {
     const total = Object.values(form.weights).reduce(
@@ -894,6 +854,11 @@ export default function App() {
           source_url: item.property.source_url || "",
           latitude: item.property.latitude,
           longitude: item.property.longitude,
+          nearby_convenience_stores: item.property.nearby_convenience_stores || [],
+          convenience_store_lookup_completed:
+            item.property.convenience_store_lookup_completed || false,
+          nearby_parking_facilities: item.property.nearby_parking_facilities || [],
+          parking_lookup_completed: item.property.parking_lookup_completed || false,
         })),
       });
       setMapContext(context);
@@ -933,7 +898,12 @@ export default function App() {
         </nav>
         <div className="hero-copy">
           <span className="eyebrow">MULTI-AGENT RENTAL DECISION PLATFORM</span>
-          <h1>不是幫你找房，<br />而是幫你做出<span>更好的租屋決策。</span></h1>
+          <h1>
+            <span className="hero-title-line">不是幫你找房，</span>
+            <span className="hero-title-line">
+              而是幫你做出<span>更好的租屋<span className="hero-no-break">決策。</span></span>
+            </span>
+          </h1>
           <p>多個 AI Agent 分別分析地點、成本、房況與生活偏好，再共同完成跨房源比較。</p>
         </div>
       </header>
@@ -1046,7 +1016,6 @@ export default function App() {
               {form.needs_parking && <span>需要停車</span>}
               {form.needs_rental_subsidy && <span>需要可申請租補</span>}
               {form.needs_convenience_store && <span>附近要有超商</span>}
-              {form.use_community_evidence && <span>查公開社群意見</span>}
               {form.noise_preference === "quiet" && <span>希望安靜</span>}
               {displayPreferences.map((preference) => (
                 <span key={preference}>{preference}</span>
@@ -1111,10 +1080,10 @@ export default function App() {
             >
               <div className="input-suffix"><input type="number" value={form.max_commute_minutes} onChange={(e) => update("max_commute_minutes", e.target.value)} /><span>分鐘</span></div>
             </Field>
-            <Field label="噪音偏好">
+            <Field label="安靜程度">
               <select value={form.noise_preference} onChange={(e) => update("noise_preference", e.target.value)}>
                 <option value="quiet">希望安靜</option>
-                <option value="balanced">可以接受一般噪音</option>
+                <option value="balanced">可接受一般環境聲</option>
                 <option value="no_preference">沒有偏好</option>
               </select>
             </Field>
@@ -1141,11 +1110,6 @@ export default function App() {
               checked={form.needs_rental_subsidy}
               onChange={(v) => update("needs_rental_subsidy", v)}
               label="需要可申請租金補貼"
-            />
-            <Toggle
-              checked={form.use_community_evidence}
-              onChange={(v) => update("use_community_evidence", v)}
-              label="查詢公開社群意見"
             />
           </div>
 
@@ -1261,7 +1225,7 @@ export default function App() {
           </>
         )}
       </div>
-      <footer>RentWise · Agentic AI Competition Demo · LangGraph × FastAPI × React</footer>
+      <footer>RentWise · Agentic AI Rental Platform · LangGraph × FastAPI × React</footer>
     </main>
   );
 }

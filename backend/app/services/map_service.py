@@ -25,7 +25,7 @@ OVERPASS_URLS = (
     "https://overpass-api.de/api/interpreter",
     "https://lz4.overpass-api.de/api/interpreter",
 )
-MAP_USER_AGENT = "RentWise/1.0 (student rental decision demo)"
+MAP_USER_AGENT = "RentWise/1.0 (student rental decision platform)"
 _nominatim_lock = threading.Lock()
 _last_nominatim_request = 0.0
 
@@ -54,10 +54,27 @@ def _region_name(destination: str) -> str:
 
 def _clean_listing_address(address: str) -> str:
     cleaned = re.sub(r"^無\s+", "", address).strip()
-    district_match = re.search(r"[\u4e00-\u9fff]{1,4}區-", cleaned)
-    if district_match:
-        cleaned = cleaned[district_match.start():]
-    return cleaned.replace("-", "")
+    separated = re.search(
+        r"(?:[\u4e00-\u9fff]{2,3}[市縣])?"
+        r"(?P<district>[\u4e00-\u9fff]{1,3}區)"
+        r"\s*[-－—]\s*(?P<street>.+)",
+        cleaned,
+    )
+    if separated:
+        return f"{separated.group('street').strip()}, {separated.group('district')}"
+
+    concatenated = re.match(
+        r"(?:[\u4e00-\u9fff]{2,3}[市縣])?"
+        r"(?P<district>[\u4e00-\u9fff]{1,3}區)"
+        r"(?P<street>.+(?:路|街|大道).*)",
+        cleaned,
+    )
+    if concatenated:
+        return (
+            f"{concatenated.group('street').strip()}, "
+            f"{concatenated.group('district')}"
+        )
+    return cleaned
 
 
 def _street_level_address(address: str) -> str:
@@ -287,6 +304,35 @@ def find_parking_facilities(points: list[MapPoint]) -> list[MapPoint]:
     )
 
 
+def _cached_amenities(
+    properties: list[MapPropertyInput],
+    field: str,
+) -> list[MapPoint]:
+    points = {}
+    for property_ in properties:
+        for amenity in getattr(property_, field):
+            points.setdefault(
+                f"{amenity.kind}:{amenity.id}",
+                MapPoint(
+                    id=amenity.id,
+                    title=amenity.title,
+                    address=amenity.address,
+                    latitude=amenity.latitude,
+                    longitude=amenity.longitude,
+                    kind=amenity.kind,
+                ),
+            )
+    return list(points.values())
+
+
+def _merge_map_points(*groups: list[MapPoint]) -> list[MapPoint]:
+    merged = {}
+    for group in groups:
+        for point in group:
+            merged.setdefault(f"{point.kind}:{point.id}", point)
+    return list(merged.values())
+
+
 def build_map_context(request: MapContextRequest) -> MapContextResponse:
     warnings = []
     region_name = _region_name(request.destination)
@@ -347,17 +393,39 @@ def build_map_context(request: MapContextRequest) -> MapContextResponse:
             "目的地無法精確定位，地圖暫以候選房源生活圈中心作為代表點。"
         )
 
-    convenience_stores = []
-    try:
-        convenience_stores = find_convenience_stores(properties)[:40]
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        warnings.append("目前無法取得附近超商資料。")
+    cached_stores = _cached_amenities(
+        request.properties,
+        "nearby_convenience_stores",
+    )
+    convenience_stores = cached_stores
+    if not all(
+        property_.convenience_store_lookup_completed
+        for property_ in request.properties
+    ):
+        try:
+            convenience_stores = _merge_map_points(
+                cached_stores,
+                find_convenience_stores(properties),
+            )[:40]
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            warnings.append("目前無法取得附近超商資料。")
 
-    parking_facilities = []
-    try:
-        parking_facilities = find_parking_facilities(properties)[:40]
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        warnings.append("目前無法取得附近停車場資料。")
+    cached_parking = _cached_amenities(
+        request.properties,
+        "nearby_parking_facilities",
+    )
+    parking_facilities = cached_parking
+    if not all(
+        property_.parking_lookup_completed
+        for property_ in request.properties
+    ):
+        try:
+            parking_facilities = _merge_map_points(
+                cached_parking,
+                find_parking_facilities(properties),
+            )[:40]
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            warnings.append("目前無法取得附近停車場資料。")
 
     return MapContextResponse(
         destination=destination,

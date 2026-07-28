@@ -2,13 +2,15 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from app.agents.ai_comparison import generate_ai_summary
-from app.agents.community_evidence import collect_community_evidence
+from app.agents.decision_explanation import generate_decision_explanation
 from app.agents.ai_enrichment import (
     analyze_property_images,
     apply_cost_estimate,
+    apply_listing_requirement_analysis,
     apply_property_vision,
+    classify_listing_uses,
     estimate_property_costs,
+    interpret_listing_requirements,
 )
 from app.agents.rule_agents import (
     cost_assessment,
@@ -18,6 +20,7 @@ from app.agents.rule_agents import (
 )
 from app.models.schemas import AgentTrace, Property, UserRequirements
 from app.services.property_service import load_properties_for_requirements
+from app.services.rent591_service import Rent591Error
 from app.services.commute_service import enrich_commute_data
 from app.services.source_planning_service import (
     SourceSearchPlan,
@@ -33,7 +36,6 @@ class RentWiseState(TypedDict, total=False):
     cost_results: dict[str, Any]
     property_results: dict[str, Any]
     suitability_results: dict[str, Any]
-    community_evidence_results: dict[str, Any]
     ranked_results: list[dict[str, Any]]
     summary: str
     mode: str
@@ -42,17 +44,6 @@ class RentWiseState(TypedDict, total=False):
 
 def source_planning_node(state: RentWiseState) -> dict:
     req = state["requirements"]
-    if req.property_source == "demo":
-        return {
-            "trace": [
-                AgentTrace(
-                    agent="Source Planning Agent",
-                    status="skipped",
-                    message="Demo 模式使用內建房源，不需規劃外部來源",
-                    property_count=0,
-                )
-            ]
-        }
     plan = build_source_search_plan(req)
     return {
         "source_plan": plan,
@@ -82,10 +73,22 @@ def load_node(state: RentWiseState) -> dict:
         req,
         state.get("source_plan"),
     )
+    original_count = len(properties)
+    use_analyses, use_message = classify_listing_uses(properties)
+    properties = [
+        property_
+        for property_ in properties
+        if not (
+            (analysis := use_analyses.get(property_.id))
+            and analysis.classification == "not_habitable"
+            and analysis.confidence in {"medium", "high"}
+        )
+    ]
+    if original_count and not properties:
+        raise Rent591Error("取得的刊登皆為車位、置物空間或其他非住宅用途。")
     source_label = {
         "multi": "多平台即時",
         "591": "591 即時",
-        "demo": "Demo",
     }[req.property_source]
     return {
         "properties": properties,
@@ -93,7 +96,10 @@ def load_node(state: RentWiseState) -> dict:
             AgentTrace(
                 agent="Data Loader",
                 status="completed",
-                message=f"已載入 {len(properties)} 筆{source_label}候選房源",
+                message=(
+                    f"已載入 {len(properties)} 筆{source_label}可居住候選房源"
+                    f"；{use_message}"
+                ),
                 property_count=len(properties),
             )
         ],
@@ -113,20 +119,16 @@ def location_node(state: RentWiseState) -> dict:
             else None
         )
     )
-    properties = (
-        enrich_commute_data(
-            state["properties"],
-            (
-                plan.resolved_address
-                if plan and plan.resolved_address
-                else req.destination_resolved_address or req.destination
-            ),
-            req.commute_mode,
-            req.needs_parking,
-            destination_coordinates,
-        )
-        if req.property_source != "demo"
-        else state["properties"]
+    properties = enrich_commute_data(
+        state["properties"],
+        (
+            plan.resolved_address
+            if plan and plan.resolved_address
+            else req.destination_resolved_address or req.destination
+        ),
+        req.commute_mode,
+        req.needs_parking,
+        destination_coordinates,
     )
     results = {p.id: location_assessment(p, req) for p in properties}
     commute_count = sum(p.commute_minutes is not None for p in properties)
@@ -179,10 +181,21 @@ def cost_node(state: RentWiseState) -> dict:
 
 def property_node(state: RentWiseState) -> dict:
     req = state["requirements"]
-    analyses, message = analyze_property_images(state["properties"])
+    requirement_analyses, requirement_message = interpret_listing_requirements(
+        req,
+        state["properties"],
+    )
+    interpreted_properties = [
+        apply_listing_requirement_analysis(
+            property_,
+            requirement_analyses.get(property_.id),
+        )
+        for property_ in state["properties"]
+    ]
+    analyses, vision_message = analyze_property_images(interpreted_properties)
     properties = [
         apply_property_vision(p, analyses.get(p.id))
-        for p in state["properties"]
+        for p in interpreted_properties
     ]
     results = {p.id: property_assessment(p, req) for p in properties}
     return {
@@ -192,7 +205,7 @@ def property_node(state: RentWiseState) -> dict:
             AgentTrace(
                 agent="Property Agent",
                 status="completed",
-                message=message,
+                message=f"{requirement_message}；{vision_message}",
                 property_count=len(results),
             )
         ],
@@ -223,32 +236,7 @@ def suitability_node(state: RentWiseState) -> dict:
     }
 
 
-def community_evidence_node(state: RentWiseState) -> dict:
-    ordered_properties = sorted(
-        state["properties"],
-        key=lambda property_: state["suitability_results"][
-            property_.id
-        ].score,
-        reverse=True,
-    )
-    evidence, message = collect_community_evidence(
-        state["requirements"],
-        ordered_properties,
-    )
-    return {
-        "community_evidence_results": evidence,
-        "trace": state["trace"] + [
-            AgentTrace(
-                agent="Community Evidence Agent",
-                status="completed" if evidence else "skipped",
-                message=message,
-                property_count=len(evidence),
-            )
-        ],
-    }
-
-
-def comparison_node(state: RentWiseState) -> dict:
+def decision_explanation_node(state: RentWiseState) -> dict:
     ranked = []
     for p in state["properties"]:
         assessments = {
@@ -263,15 +251,6 @@ def comparison_node(state: RentWiseState) -> dict:
             strengths.extend(assessment.positives)
             tradeoffs.extend(assessment.concerns)
 
-        community = state.get("community_evidence_results", {}).get(p.id)
-        if community:
-            for finding in community.findings:
-                message = f"社群參考（{finding.topic}）：{finding.summary}"
-                if finding.sentiment == "positive":
-                    strengths.append(message)
-                elif finding.sentiment in {"negative", "mixed"}:
-                    tradeoffs.append(message)
-
         total_score = state["suitability_results"][p.id].score
         ranked.append(
             {
@@ -283,7 +262,6 @@ def comparison_node(state: RentWiseState) -> dict:
                 "strengths": list(dict.fromkeys(strengths))[:5],
                 "tradeoffs": list(dict.fromkeys(tradeoffs))[:5],
                 "assessments": assessments,
-                "community_evidence": community,
             }
         )
 
@@ -333,7 +311,7 @@ def comparison_node(state: RentWiseState) -> dict:
         if plan
         else state["requirements"].destination
     )
-    summary, mode = generate_ai_summary(
+    summary, mode = generate_decision_explanation(
         state["requirements"],
         ranked,
         destination_context,
@@ -344,7 +322,7 @@ def comparison_node(state: RentWiseState) -> dict:
         "mode": mode,
         "trace": state["trace"] + [
             AgentTrace(
-                agent="Comparison Agent",
+                agent="Decision Explanation Agent",
                 status="completed",
                 message=(
                     "OpenAI 已整合所有 Agent、目的地脈絡與不確定性"
@@ -365,8 +343,10 @@ def build_graph():
     graph.add_node("cost_agent", cost_node)
     graph.add_node("property_agent", property_node)
     graph.add_node("suitability_agent", suitability_node)
-    graph.add_node("community_evidence_agent", community_evidence_node)
-    graph.add_node("comparison_agent", comparison_node)
+    graph.add_node(
+        "decision_explanation_agent",
+        decision_explanation_node,
+    )
 
     graph.add_edge(START, "source_planning_agent")
     graph.add_edge("source_planning_agent", "load_properties")
@@ -374,9 +354,8 @@ def build_graph():
     graph.add_edge("location_agent", "cost_agent")
     graph.add_edge("cost_agent", "property_agent")
     graph.add_edge("property_agent", "suitability_agent")
-    graph.add_edge("suitability_agent", "community_evidence_agent")
-    graph.add_edge("community_evidence_agent", "comparison_agent")
-    graph.add_edge("comparison_agent", END)
+    graph.add_edge("suitability_agent", "decision_explanation_agent")
+    graph.add_edge("decision_explanation_agent", END)
     return graph.compile()
 
 

@@ -23,18 +23,18 @@ def build_rule_summary(ranked: list[dict[str, Any]]) -> str:
         f"適配分數 {best['total_score']:.1f} 分，預估每月支出 "
         f"{best['estimated_monthly_cost']:,} 元。此排名同時考量通勤、"
         "真實生活成本、房況硬體與個人生活偏好；建議簽約前仍實地確認"
-        "噪音、採光與租約費用。"
+        "安靜程度、採光與租約費用。"
     )
 
 
-def generate_ai_summary(
+def generate_decision_explanation(
     req: UserRequirements,
     ranked: list[dict[str, Any]],
     destination_context: str = "",
 ) -> tuple[str, str]:
     settings = get_settings()
     if not settings.openai_api_key:
-        return build_rule_summary(ranked), "demo"
+        return build_rule_summary(ranked), "rules"
 
     try:
         from openai import OpenAI
@@ -60,11 +60,6 @@ def generate_ai_summary(
                     name: assessment.summary
                     for name, assessment in item["assessments"].items()
                 },
-                "community_evidence": (
-                    item["community_evidence"].model_dump()
-                    if item.get("community_evidence")
-                    else None
-                ),
             }
             for index, item in enumerate(ranked)
         ]
@@ -72,7 +67,8 @@ def generate_ai_summary(
         response = client.responses.create(
             model=settings.openai_model,
             instructions=(
-                "你是 RentWise 的 Comparison Agent。請使用繁體中文，根據多個"
+                "你是 RentWise 的 Decision Explanation Agent。請使用繁體中文，"
+                "根據多個"
                 "專業 Agent 已完成的結構化結果，給出 120 字內、具體且不誇大的"
                 "租屋決策摘要。需要理解目的地的完整地理脈絡，提到首選、主要"
                 "取捨與實地看房提醒；AI 估算與圖片判讀必須保留不確定性。"
@@ -89,4 +85,4 @@ def generate_ai_summary(
         text = (response.output_text or "").strip()
         return (text or build_rule_summary(ranked)), "ai"
     except Exception:
-        return build_rule_summary(ranked), "demo"
+        return build_rule_summary(ranked), "rules"

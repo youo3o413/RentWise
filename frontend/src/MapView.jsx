@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Car,
   ExternalLink,
-  Home,
   LoaderCircle,
   MapPin,
   Navigation,
@@ -299,12 +298,12 @@ export default function MapView({
                   <button type="button" onClick={() => selectFirst(properties)} disabled={!properties.length}>
                     <MapPin size={18} /><strong>{properties.length}</strong><span>間房源</span>
                   </button>
-                  <button type="button" onClick={() => selectFirst(stores)} disabled={!stores.length}>
+                  <div className="map-count-static">
                     <Store size={18} /><strong>{stores.length}</strong><span>間超商</span>
-                  </button>
-                  <button type="button" onClick={() => selectFirst(parking)} disabled={!parking.length}>
+                  </div>
+                  <div className="map-count-static">
                     <Car size={18} /><strong>{parking.length}</strong><span>處停車</span>
-                  </button>
+                  </div>
                 </div>
               </div>
 
@@ -316,52 +315,13 @@ export default function MapView({
                 <button type="button" onClick={() => selectFirst(properties)} disabled={!properties.length}>
                   <i className="legend-dot property" />推薦房源
                 </button>
-                <button type="button" onClick={() => selectFirst(stores)} disabled={!stores.length}>
+                <span className="legend-item">
                   <i className="legend-dot store" />便利商店
-                </button>
-                <button type="button" onClick={() => selectFirst(parking)} disabled={!parking.length}>
+                </span>
+                <span className="legend-item">
                   <i className="legend-dot parking" />停車設施
-                </button>
+                </span>
                 <small><Navigation size={13} />虛線僅表示相對位置，不代表實際通勤路線。</small>
-              </div>
-
-              <div className="store-list">
-                <h3>推薦房源</h3>
-                {properties.length ? properties.map((property, index) => (
-                  <SidebarPointButton
-                    key={property.id}
-                    point={property}
-                    icon={Home}
-                    prefix={`#${index + 1}`}
-                    selected={selectedKey === pointKey(property)}
-                    onSelect={selectPoint}
-                  />
-                )) : <p>目前沒有可顯示的房源位置。</p>}
-              </div>
-
-              <div className="store-list">
-                <h3>附近便利商店</h3>
-                {stores.length ? stores.slice(0, 10).map((store) => (
-                  <SidebarPointButton
-                    key={store.id}
-                    point={store}
-                    icon={Store}
-                    selected={selectedKey === pointKey(store)}
-                    onSelect={selectPoint}
-                  />
-                )) : <p>OpenStreetMap 暫無可顯示的超商資料。</p>}
-              </div>
-              <div className="store-list">
-                <h3>附近停車設施</h3>
-                {parking.length ? parking.slice(0, 10).map((facility) => (
-                  <SidebarPointButton
-                    key={facility.id}
-                    point={facility}
-                    icon={Car}
-                    selected={selectedKey === pointKey(facility)}
-                    onSelect={selectPoint}
-                  />
-                )) : <p>OpenStreetMap 暫無可顯示的停車資料。</p>}
               </div>
             </aside>
           </div>

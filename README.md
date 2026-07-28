@@ -6,10 +6,9 @@
 - FastAPI 後端
 - LangGraph Multi-Agent 工作流
 - Source Planning / Data Loader / Location / Cost / Property / Suitability /
-  Community Evidence / Comparison Agents
-- 內建 5 筆政大周邊範例房源
+  Decision Explanation Agents
 - 無 OpenAI API Key 也能完整展示
-- 有 API Key 時，Comparison Agent 會使用 OpenAI 產生更自然的決策摘要
+- 有 API Key 時，Decision Explanation Agent 會使用 OpenAI 產生更自然的決策摘要
 - 有 API Key 時，可用 Requirement Agent 將一段自然語言轉成表單條件與適配權重
 - 目的地欄位會即時將「裕隆城」等地標解析成具體行政區、地址與座標，讓使用者
   在開始搜尋前確認系統理解的位置
@@ -30,14 +29,14 @@ Load Properties（多平台載入＋去重）
           ↓
    Suitability Agent
           ↓
-   Community Evidence Agent（選用）
-          ↓
-   Comparison Agent
+   Decision Explanation Agent
           ↓
 推薦排名 + Agent 決策軌跡
 ```
 
-> LangGraph 的節點透過共享 State 傳遞資料；三個專業分析 Agent 先執行，再由 Suitability Agent 計算整體適配分數，最後交給 Comparison Agent 排名。
+> LangGraph 的節點透過共享 State 傳遞資料；三個專業分析 Agent 先執行，再由
+> Suitability Agent 計算適配分並完成排名，最後交給 Decision Explanation Agent
+> 產生決策說明。
 
 ## 1. 最快啟動方式
 
@@ -83,7 +82,7 @@ OPENAI_API_KEY=你的金鑰
 OPENAI_MODEL=gpt-4.1-mini
 ```
 
-沒有填 Key 時，整套系統仍可正常運作，畫面會標示 `Demo rules mode`。
+沒有填 Key 時，整套系統仍可正常運作，畫面會標示 `Rules mode`。
 Requirement Agent 的「套用需求」按鈕會停用，但手動表單、數據分析與規則排名
 仍可使用。
 
@@ -103,7 +102,7 @@ docker compose up --build
 - 後端：http://localhost:8000
 - API 文件：http://localhost:8000/docs
 
-## 4. Demo 建議操作
+## 4. 建議操作
 
 可以直接使用預設條件：
 
@@ -124,15 +123,14 @@ docker compose up --build
    的管理費、水費、電價與用電量
 5. Property Agent 使用 OpenAI 圖片輸入，結合刊登坪數判讀窗戶與空間觀感
 6. Suitability Agent 根據個人偏好計分
-7. Community Evidence Agent 視需要查證公開社群意見，整理主題、正反傾向、
-   證據範圍與來源數
-8. Comparison Agent 使用 OpenAI，取得目的地完整地理脈絡與所有 Agent 結果，
-   將社群證據、AI 估算可信度與客觀分數納入最終取捨說明
-9. 點「查看地圖與超商」後，載入目的地、前 6 名房源，以及房源
+7. Decision Explanation Agent 使用 OpenAI，讀取已完成的排名、目的地脈絡與
+   所有 Agent 結果，將 AI 估算可信度與客觀分數納入最終取捨說明；不修改名次
+8. 點「查看地圖與超商」後，載入目的地、前 6 名房源，以及房源
    500 公尺內的 OpenStreetMap 便利商店與停車設施
 
-地圖右欄的目的地、房源、便利商店、停車設施、數量方塊與圖例皆可點選；選取後
-地圖會移動到該點並以動畫光圈標示。若抽象目的地仍無法精確定位，地圖會使用候選
+地圖右欄的目的地與房源可點選；選取後地圖會移動到該點並以動畫光圈標示。
+便利商店與停車設施僅以數量、圖例及地圖標記呈現。若抽象目的地仍無法精確定位，
+地圖會使用候選
 房源生活圈中心作為可點選的代表點，並明確標示它不是精確目的地。
 
 Property Agent 不向使用者顯示不透明的房況分數，而是將使用者條件逐項標示為
@@ -204,8 +202,7 @@ Content-Type: application/json
   "property_source": "multi",
   "commute_mode": "transit_walk",
   "needs_parking": false,
-  "needs_rental_subsidy": false,
-  "use_community_evidence": false
+  "needs_rental_subsidy": false
 }
 ```
 
@@ -213,7 +210,6 @@ Content-Type: application/json
 
 - `multi`：同時讀取 591 與好房網快租，合併相同租金與地址的重複刊登（預設，需要網路）
 - `591`：只依目的地讀取 591 即時公開刊登（需要網路）
-- `demo`：使用專案內建的 5 筆固定示範資料
 
 ### 將自然語言轉成租屋條件
 
@@ -250,15 +246,11 @@ Valhalla 真實步行路網。若路由服務暫時無法使用，則清楚標�
 
 `commute_mode` 可設為 `transit_walk` 或 `drive`。駕車模式使用 Valhalla `auto`
 道路路網時間並與大眾運輸／步行結果並列，但不宣稱是即時塞車時間。
-`needs_parking` 啟用時會查詢房源 500 公尺內的 OpenStreetMap 停車設施。
+`needs_parking` 啟用時會查詢房源 500 公尺內的 OpenStreetMap 停車設施，並將
+停車距離分數納入 Location 分數。通勤、使用者有勾選的超商與停車項目會平均
+分配 Location 權重；資料未知的項目不參與，也不以猜測值扣分。
 `needs_rental_subsidy` 啟用時，Property Agent 會將刊登中的租補資訊標成符合、
 不符合或待確認；只有刊登明確不配合時才視為必要條件衝突。
-
-`use_community_evidence` 啟用且偏好包含可養寵物、隔音、治安、夜間安全或社區
-風評時，Community Evidence Agent 最多查詢前三名候選房源，只使用 PTT、Dcard、
-Mobile01、Reddit 等公開頁面並保留引用連結。結果會區分同一房源、同棟社區、
-附近街區或一般生活圈，並納入 Comparison Agent 的優缺點說明；社群內容不直接
-改動適配分，也不能代替房東或租約確認，Facebook 與登入限定內容排除。
 
 目的地可輸入唯一行政區簡稱，例如「內湖」會解析為台北市內湖區；若名稱在不同
 縣市重複（例如「大安」），系統仍會要求補上縣市，避免查錯生活圈。
@@ -272,6 +264,18 @@ OpenStreetMap，在每間房 500 公尺內找到的超商會直接納入 Locatio
 含水費、固定管理費、每度電價與租補標示，多來源重複房源會保留揭露較完整的
 費用與租補資訊。
 
+Data Loader 在通勤與排名前會先做可居住用途審核。純車位、置物空間、儲藏室、
+迷你倉、倉庫或明確禁止居住／過夜的刊登會被排除；透明規則無法確認的物件，
+再由 OpenAI 讀取完整刊登頁做結構化分類。只有中或高可信度的非住宅判定會自動
+排除，證據不足的物件保留為待確認，住宅附車位或附儲藏室不會因此被刪除。
+
+Property Agent 會進一步讀取原始刊登詳情頁，讓 OpenAI 依使用者條件理解同義詞、
+縮寫、否定與委婉寫法。每項 AI 判定都必須保留原文證據、可信度與
+符合／不符合／待確認狀態；無法讀取詳情頁、OpenAI 暫時不可用或語意不明時，
+自動退回透明關鍵字規則，不會由 AI 猜測或直接產生適配分。
+使用者有設定安靜程度時，Property Agent 也會從刊登原文產生低、中、高或未知的
+噪音證據與可信度；Suitability Agent 只依這份證據套用公開公式，不自行解讀文字。
+
 ### 取得地圖與附近超商／停車設施
 
 ```http
@@ -280,8 +284,9 @@ Content-Type: application/json
 ```
 
 地圖使用 Leaflet 與 OpenStreetMap 圖磚，地址定位使用 Nominatim，便利商店與
-停車設施查詢使用 Overpass API。此 API 只會在使用者進入地圖頁時呼叫；地圖上的
-虛線表示相對位置，不是實際道路路線或通勤時間。
+停車設施查詢使用 Overpass API。Location Agent 在推薦分析時已取得的設施座標會
+直接傳給地圖重用；只有該類設施尚未查詢完成時，地圖 API 才會補查。地圖上的虛線
+表示相對位置，不是實際道路路線或通勤時間。
 
 ## 6. 專案結構
 
@@ -307,7 +312,10 @@ RentWise/
 
 ## 7. 競賽簡報可用說法
 
-RentWise 並非由單一聊天機器人一次產生答案，而是讓多個具有明確責任的 Agent 讀取同一份租屋需求與房源資料。LangGraph 負責管理狀態與節點流程，專業 Agent 分別完成地點、成本及房況分析，再由 Suitability Agent 依使用者偏好計算適配度，最後交給 Comparison Agent 進行跨房源比較與決策說明。
+RentWise 並非由單一聊天機器人一次產生答案，而是讓多個具有明確責任的 Agent
+讀取同一份租屋需求與房源資料。LangGraph 負責管理狀態與節點流程，專業 Agent
+分別完成地點、成本及房況分析，再由 Suitability Agent 依使用者偏好計算適配度
+並排名，最後交給 Decision Explanation Agent 產生決策說明。
 
 ## 8. 下一步可擴充
 

@@ -46,7 +46,6 @@ class ParsedRequirementIntent(BaseModel):
     commute_mode: Literal["transit_walk", "drive"] | None = None
     needs_parking: bool | None = None
     needs_rental_subsidy: bool | None = None
-    use_community_evidence: bool | None = None
     weights: ParsedWeights | None = None
     interpretation: str = Field(min_length=1, max_length=300)
     assumptions: list[str] = Field(default_factory=list)
@@ -65,14 +64,12 @@ REQUIREMENT_AGENT_INSTRUCTIONS = """
 5. 若使用者表達在意程度，請同時提出 location、cost、property、noise 四項相對
    權重並盡量加總為 100。沒有表達在意程度時 weights 回傳 null。
 6. preferences 使用精簡、可核對的繁體中文詞彙，不要重複已有的窗戶、電梯、
-   便利商店或噪音欄位。
+   便利商店或安靜程度欄位。
 7. 使用者明確說開車、駕車或有車時，commute_mode 設為 drive；需要車位時才把
    needs_parking 設為 true。
-8. 遇到可養寵物、隔音、治安、夜間安全、社區風評等需要公開意見佐證的偏好，
-   use_community_evidence 設為 true；一般硬體條件不要啟用。
-9. 使用者提到「租補、租金補貼、可申請租補」時，needs_rental_subsidy 設為
+8. 使用者提到「租補、租金補貼、可申請租補」時，needs_rental_subsidy 設為
    true；明確說不需要時才設為 false。
-10. interpretation 用一句繁體中文摘要你實際套用的條件；assumptions 列出必要但
+9. interpretation 用一句繁體中文摘要你實際套用的條件；assumptions 列出必要但
    不確定的推定。不得捏造租金、距離、設備或房源事實。
 """.strip()
 
