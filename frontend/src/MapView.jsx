@@ -59,7 +59,7 @@ function MarkerPopup({ point, rank }) {
       <div className="map-popup">
         <strong>{rank ? `#${rank} ${point.title}` : point.title}</strong>
         <span>{point.address}</span>
-        {point.is_approximate && <em>此為生活圈代表點，並非精確目的地。</em>}
+        {point.is_approximate && <em>此為約略位置，並非精確門牌定位。</em>}
         {point.score != null && <b>推薦分數 {Math.round(point.score)}</b>}
         {point.source_url && (
           <a href={point.source_url} target="_blank" rel="noopener noreferrer">

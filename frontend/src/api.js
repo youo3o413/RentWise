@@ -1,5 +1,48 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+function formatErrorDetail(detail, fallback) {
+  if (typeof detail === "string" && detail.trim()) return detail;
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (!item || typeof item !== "object") return "";
+        const field = Array.isArray(item.loc)
+          ? item.loc.filter((part) => !["body", "query", "path"].includes(part)).join(".")
+          : "";
+        const message = item.msg || item.message || item.error || "";
+        if (!message) return "";
+        return field ? `${field}：${message}` : message;
+      })
+      .filter(Boolean);
+    if (messages.length) return messages.join("；");
+  }
+
+  if (detail && typeof detail === "object") {
+    const message = detail.message || detail.msg || detail.error;
+    if (typeof message === "string" && message.trim()) return message;
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return fallback;
+    }
+  }
+
+  return fallback;
+}
+
+async function responseError(response, fallback) {
+  const raw = await response.text();
+  if (!raw) return fallback;
+  try {
+    const body = JSON.parse(raw);
+    return formatErrorDetail(body?.detail ?? body, fallback);
+  } catch {
+    return raw;
+  }
+}
+
 export async function getHealth() {
   const response = await fetch(`${API_BASE}/api/health`);
   if (!response.ok) throw new Error("無法連線至後端");
@@ -13,14 +56,32 @@ export async function getRecommendation(requirements) {
     body: JSON.stringify(requirements),
   });
   if (!response.ok) {
-    let detail = "分析失敗";
-    try {
-      const body = await response.json();
-      detail = body.detail || detail;
-    } catch {
-      detail = await response.text() || detail;
-    }
-    throw new Error(detail);
+    throw new Error(await responseError(response, "分析失敗"));
+  }
+  return response.json();
+}
+
+export async function getSavedRecommendation(threadId) {
+  const response = await fetch(
+    `${API_BASE}/api/recommend/${encodeURIComponent(threadId)}`,
+  );
+  if (!response.ok) {
+    throw new Error(await responseError(response, "無法恢復推薦流程"));
+  }
+  return response.json();
+}
+
+export async function sendRecommendationFeedback(threadId, feedback) {
+  const response = await fetch(
+    `${API_BASE}/api/recommend/${encodeURIComponent(threadId)}/feedback`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(feedback),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(await responseError(response, "無法更新推薦偏好"));
   }
   return response.json();
 }
@@ -32,14 +93,9 @@ export async function parseRequirements(text, current) {
     body: JSON.stringify({ text, current }),
   });
   if (!response.ok) {
-    let detail = "Requirement Agent 無法解析需求";
-    try {
-      const body = await response.json();
-      detail = body.detail || detail;
-    } catch {
-      detail = (await response.text()) || detail;
-    }
-    throw new Error(detail);
+    throw new Error(
+      await responseError(response, "Requirement Agent 無法解析需求"),
+    );
   }
   return response.json();
 }
@@ -52,14 +108,7 @@ export async function resolveDestination(query, signal) {
     signal,
   });
   if (!response.ok) {
-    let detail = "無法辨識這個目的地";
-    try {
-      const body = await response.json();
-      detail = body.detail || detail;
-    } catch {
-      detail = (await response.text()) || detail;
-    }
-    throw new Error(detail);
+    throw new Error(await responseError(response, "無法辨識這個目的地"));
   }
   return response.json();
 }
@@ -71,14 +120,7 @@ export async function getMapContext(payload) {
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    let detail = "無法載入地圖資料";
-    try {
-      const body = await response.json();
-      detail = body.detail || detail;
-    } catch {
-      detail = (await response.text()) || detail;
-    }
-    throw new Error(detail);
+    throw new Error(await responseError(response, "無法載入地圖資料"));
   }
   return response.json();
 }

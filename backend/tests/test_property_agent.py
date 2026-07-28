@@ -54,12 +54,13 @@ def test_property_agent_returns_explicit_condition_checks():
     assert checks["對外窗"].status == "met"
     assert checks["電梯"].status == "unknown"
     assert checks["樓層負擔"].status == "met"
+    assert checks["安靜程度"].status == "unknown"
     assert checks["採光良好"].status == "met"
     assert checks["可開伙"].status == "unknown"
     assert result.metrics["met_count"] == 3
-    assert result.metrics["unknown_count"] == 2
+    assert result.metrics["unknown_count"] == 3
     assert result.metrics["unmet_count"] == 0
-    assert result.metrics["data_completeness"] == 60
+    assert result.metrics["data_completeness"] == 50
     assert result.metrics["known_match_rate"] == 100
     assert result.score == 100
     assert result.metrics["score_available"] is True
@@ -80,8 +81,32 @@ def test_property_agent_marks_confirmed_conflicts():
     )
 
     assert result.metrics["unmet_count"] == 3
-    assert result.metrics["unknown_count"] == 0
+    assert result.metrics["unknown_count"] == 1
     assert result.score == 0
+
+
+def test_property_agent_includes_quietness_as_a_property_condition():
+    requirements = UserRequirements(
+        needs_window=False,
+        noise_preference="quiet",
+        property_source="591",
+    )
+    result = property_assessment(
+        _property(
+            noise_level="low",
+            noise_analyzed_by_ai=True,
+            noise_evidence="刊登原文寫住宅巷內、夜間安靜",
+            noise_confidence="high",
+        ),
+        requirements,
+    )
+
+    quietness = next(
+        check for check in result.checks
+        if check.label == "安靜程度"
+    )
+    assert quietness.status == "met"
+    assert "夜間安靜" in quietness.evidence
 
 
 def test_property_agent_treats_all_unknown_as_neutral():
@@ -105,7 +130,7 @@ def test_property_agent_treats_all_unknown_as_neutral():
     )
 
     assert result.metrics["data_completeness"] == 0
-    assert result.metrics["unknown_count"] == 4
+    assert result.metrics["unknown_count"] == 5
     assert result.score == 0
     assert result.metrics["score_available"] is False
 
@@ -134,7 +159,6 @@ def test_suitability_uses_user_defined_weights():
             location=70,
             cost=20,
             property=10,
-            noise=0,
         ),
         property_source="591",
     )
@@ -431,8 +455,7 @@ def test_suitability_redistributes_unknown_dimensions_without_neutral_score():
         weights=SuitabilityWeights(
             location=40,
             cost=30,
-            property=20,
-            noise=10,
+            property=30,
         ),
         property_source="591",
     )
@@ -449,7 +472,6 @@ def test_suitability_redistributes_unknown_dimensions_without_neutral_score():
     assert result.metrics["location_weight"] == 0.571
     assert result.metrics["cost_weight"] == 0.429
     assert result.metrics["property_weight"] == 0
-    assert result.metrics["noise_weight"] == 0
     assert result.metrics["evidence_coverage_percent"] == 70
 
 
@@ -476,4 +498,3 @@ def test_suitability_exposes_property_agent_noise_evidence():
 
     assert result.metrics["noise_evidence_source"] == "property_agent_openai"
     assert "夜間安靜" in result.metrics["noise_evidence"]
-    assert any("Property Agent AI" in item for item in result.positives)

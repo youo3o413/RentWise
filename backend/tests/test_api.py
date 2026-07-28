@@ -5,6 +5,7 @@ from app.models.schemas import (
     UserRequirements,
 )
 from app.agents.requirement_agent import RequirementAgentQuotaError
+from app.graph import rentwise_graph as graph_module
 from app import main as main_module
 from app.main import app
 
@@ -18,8 +19,12 @@ def test_health():
 
 
 def test_recommendation_returns_ranked_live_properties(monkeypatch):
-    def fake_invoke(state):
+    def fake_invoke(state, config=None):
         assert state["requirements"].property_source == "multi"
+        assert state["requirements"].destination == "台灣大學"
+        assert state["trace"][0].agent == "Requirement Agent"
+        assert "LangGraph 前" in state["trace"][0].message
+        assert config["configurable"]["thread_id"]
         assessment = {
             "agent": "Test Agent",
             "property_id": "listing-1",
@@ -31,6 +36,7 @@ def test_recommendation_returns_ranked_live_properties(monkeypatch):
             "checks": [],
         }
         return {
+            "requirements": state["requirements"],
             "mode": "rules",
             "summary": "測試決策說明",
             "ranked_results": [
@@ -82,6 +88,19 @@ def test_recommendation_returns_ranked_live_properties(monkeypatch):
         }
 
     monkeypatch.setattr(
+        main_module,
+        "parse_natural_language_requirements",
+        lambda text, current: RequirementParseResponse(
+            requirements=current.model_copy(
+                update={"destination": "台灣大學"}
+            ),
+            interpretation="已將目的地解析為台灣大學。",
+            updated_fields=["destination"],
+            assumptions=[],
+            mode="ai",
+        ),
+    )
+    monkeypatch.setattr(
         main_module.rentwise_graph,
         "invoke",
         fake_invoke,
@@ -91,6 +110,8 @@ def test_recommendation_returns_ranked_live_properties(monkeypatch):
         json={
             "budget": 15000,
             "destination": "政治大學",
+            "requirement_text": "我在台大上課",
+            "requirements_parsed": False,
             "max_commute_minutes": 25,
             "needs_window": True,
             "noise_preference": "quiet",
@@ -101,8 +122,7 @@ def test_recommendation_returns_ranked_live_properties(monkeypatch):
             "weights": {
                 "location": 40,
                 "cost": 30,
-                "property": 20,
-                "noise": 10,
+                "property": 30,
             },
             "property_source": "multi",
         },
@@ -113,6 +133,11 @@ def test_recommendation_returns_ranked_live_properties(monkeypatch):
     assert body["property_source"] == "multi"
     assert body["mode"] == "rules"
     assert body["results"][0]["rank"] == 1
+    assert body["current_weights"] == {
+        "location": 40,
+        "cost": 30,
+        "property": 30,
+    }
     assert body["trace"][0]["agent"] == "Source Planning Agent"
     assert body["trace"][0]["status"] == "completed"
 

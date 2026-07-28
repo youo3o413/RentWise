@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -9,12 +9,11 @@ CommuteMode = Literal["transit_walk", "drive"]
 class SuitabilityWeights(BaseModel):
     location: int = Field(30, ge=0, le=100)
     cost: int = Field(30, ge=0, le=100)
-    property: int = Field(25, ge=0, le=100)
-    noise: int = Field(15, ge=0, le=100)
+    property: int = Field(40, ge=0, le=100)
 
     @model_validator(mode="after")
     def require_positive_total(self):
-        if self.location + self.cost + self.property + self.noise <= 0:
+        if self.location + self.cost + self.property <= 0:
             raise ValueError("至少需要設定一項適配權重")
         return self
 
@@ -50,6 +49,11 @@ class RequirementParseResponse(BaseModel):
     assumptions: list[str] = Field(default_factory=list)
     updated_fields: list[str] = Field(default_factory=list)
     mode: Literal["ai"]
+
+
+class RecommendationRequest(UserRequirements):
+    requirement_text: str = Field("", max_length=1000)
+    requirements_parsed: bool = False
 
 
 class DestinationResolveRequest(BaseModel):
@@ -196,11 +200,25 @@ class AgentTrace(BaseModel):
 
 
 class RecommendationResponse(BaseModel):
-    mode: Literal["ai", "rules"]
+    mode: Literal["ai", "rules"] = "rules"
     property_source: Literal["multi", "591"]
-    summary: str
-    results: list[PropertyResult]
-    trace: list[AgentTrace]
+    summary: str = ""
+    results: list[PropertyResult] = Field(default_factory=list)
+    trace: list[AgentTrace] = Field(default_factory=list)
+    thread_id: str = ""
+    awaiting_feedback: bool = False
+    workflow_status: Literal[
+        "awaiting_feedback",
+        "completed",
+    ] = "completed"
+    current_weights: SuitabilityWeights = Field(
+        default_factory=SuitabilityWeights
+    )
+
+
+class RecommendationFeedbackRequest(BaseModel):
+    accepted: bool
+    weights: SuitabilityWeights | None = None
 
 
 class MapPropertyInput(BaseModel):
@@ -220,6 +238,7 @@ class MapPropertyInput(BaseModel):
 class MapContextRequest(BaseModel):
     destination: str = Field(min_length=1, max_length=100)
     destination_address: str = Field("", max_length=500)
+    region_name: str = Field("", max_length=20)
     destination_latitude: float | None = None
     destination_longitude: float | None = None
     properties: list[MapPropertyInput] = Field(min_length=1, max_length=6)

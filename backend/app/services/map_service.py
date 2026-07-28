@@ -26,6 +26,7 @@ OVERPASS_URLS = (
     "https://lz4.overpass-api.de/api/interpreter",
 )
 MAP_USER_AGENT = "RentWise/1.0 (student rental decision platform)"
+LOCAL_ADMIN_PATTERN = r"[\u4e00-\u9fff]{1,3}(?:區|鄉|鎮|市)"
 _nominatim_lock = threading.Lock()
 _last_nominatim_request = 0.0
 
@@ -38,6 +39,12 @@ def _ssl_context() -> ssl.SSLContext:
 
 
 def _region_name(destination: str) -> str:
+    explicit_region = re.search(
+        r"([\u4e00-\u9fff]{2,3}[縣市])",
+        destination.replace("臺", "台"),
+    )
+    if explicit_region:
+        return explicit_region.group(1)
     try:
         region_id = resolve_591_location(destination)["region"]
     except Exception:
@@ -54,9 +61,16 @@ def _region_name(destination: str) -> str:
 
 def _clean_listing_address(address: str) -> str:
     cleaned = re.sub(r"^無\s+", "", address).strip()
+    cleaned = re.sub(r"^(?:地址|位置)\s*[:：]\s*", "", cleaned)
+    cleaned = re.sub(
+        r"(?:\d+\s*[樓Ff]|[Bb]\d+|地下\d+樓)(?:之\d+)?(?:室)?(?:.*)$",
+        "",
+        cleaned,
+    ).strip()
+    cleaned = re.sub(r"\s+", "", cleaned)
     separated = re.search(
         r"(?:[\u4e00-\u9fff]{2,3}[市縣])?"
-        r"(?P<district>[\u4e00-\u9fff]{1,3}區)"
+        rf"(?P<district>{LOCAL_ADMIN_PATTERN})"
         r"\s*[-－—]\s*(?P<street>.+)",
         cleaned,
     )
@@ -65,7 +79,7 @@ def _clean_listing_address(address: str) -> str:
 
     concatenated = re.match(
         r"(?:[\u4e00-\u9fff]{2,3}[市縣])?"
-        r"(?P<district>[\u4e00-\u9fff]{1,3}區)"
+        rf"(?P<district>{LOCAL_ADMIN_PATTERN})"
         r"(?P<street>.+(?:路|街|大道).*)",
         cleaned,
     )
@@ -78,7 +92,46 @@ def _clean_listing_address(address: str) -> str:
 
 
 def _street_level_address(address: str) -> str:
-    return re.sub(r"\d+(?:巷|弄|號).*$", "", address).strip()
+    parts = [part.strip() for part in address.split(",") if part.strip()]
+    street = parts[0] if parts else address
+    district = (
+        parts[1]
+        if len(parts) > 1 and re.fullmatch(LOCAL_ADMIN_PATTERN, parts[1])
+        else ""
+    )
+    street = re.sub(
+        r"(?:\d+|[XxＸｘ]+|[Ｏ○〇]+)(?:巷|弄|號).*$",
+        "",
+        street,
+    ).strip()
+    return f"{street}, {district}" if street and district else street
+
+
+def _property_geocode_queries(address: str, region_name: str) -> list[str]:
+    street_address = _street_level_address(address)
+    candidates = [address]
+    if street_address and street_address != address:
+        candidates.append(street_address)
+    queries = []
+    for candidate in candidates:
+        if not candidate:
+            continue
+        queries.append(f"{candidate}, {region_name}, 台灣")
+        parts = [part.strip() for part in candidate.split(",") if part.strip()]
+        street = parts[0]
+        district = (
+            parts[1]
+            if len(parts) > 1
+            and re.fullmatch(LOCAL_ADMIN_PATTERN, parts[1])
+            else ""
+        )
+        queries.append(f"{region_name}{district}{street}, 台灣")
+    return list(dict.fromkeys(queries))
+
+
+def _district_from_address(address: str) -> str:
+    match = re.search(rf"({LOCAL_ADMIN_PATTERN})", address)
+    return match.group(1) if match else ""
 
 
 def _rate_limited_nominatim_get(
@@ -136,7 +189,9 @@ def reverse_geocode(latitude: float, longitude: float) -> str | None:
 
 
 def _geocode_property(
-    property_: MapPropertyInput, region_name: str
+    property_: MapPropertyInput,
+    region_name: str,
+    allow_district_fallback: bool = False,
 ) -> MapPoint | None:
     if property_.latitude is not None and property_.longitude is not None:
         return MapPoint(
@@ -150,22 +205,33 @@ def _geocode_property(
             source_url=property_.source_url,
         )
     address = _clean_listing_address(property_.address)
-    location = geocode(f"{address}, {region_name}, 台灣")
-    street_address = _street_level_address(address)
-    if not location and street_address and street_address != address:
-        location = geocode(f"{street_address}, {region_name}, 台灣")
+    location = None
+    for query in _property_geocode_queries(address, region_name):
+        location = geocode(query)
+        if location:
+            break
+    approximate = False
+    district = _district_from_address(address)
+    if not location and allow_district_fallback and district:
+        location = geocode(f"{district}, {region_name}, 台灣")
+        approximate = location is not None
     if not location:
         return None
     latitude, longitude, display_name = location
     return MapPoint(
         id=property_.id,
         title=property_.title,
-        address=display_name,
+        address=(
+            f"{property_.address}（僅定位至{district}代表點）"
+            if approximate
+            else display_name
+        ),
         latitude=latitude,
         longitude=longitude,
         kind="property",
         score=property_.score,
         source_url=property_.source_url,
+        is_approximate=approximate,
     )
 
 
@@ -176,6 +242,7 @@ def geocode_property_address(
     destination: str,
     score: float = 0,
     source_url: str = "",
+    region_name: str = "",
 ) -> MapPoint | None:
     return _geocode_property(
         MapPropertyInput(
@@ -185,7 +252,7 @@ def geocode_property_address(
             score=score,
             source_url=source_url,
         ),
-        _region_name(destination),
+        region_name.strip() or _region_name(destination),
     )
 
 
@@ -335,7 +402,10 @@ def _merge_map_points(*groups: list[MapPoint]) -> list[MapPoint]:
 
 def build_map_context(request: MapContextRequest) -> MapContextResponse:
     warnings = []
-    region_name = _region_name(request.destination)
+    region_name = (
+        request.region_name.strip()
+        or _region_name(request.destination_address or request.destination)
+    )
 
     destination = None
     if (
@@ -371,9 +441,18 @@ def build_map_context(request: MapContextRequest) -> MapContextResponse:
     properties = []
     for property_ in request.properties:
         try:
-            point = _geocode_property(property_, region_name)
+            point = _geocode_property(
+                property_,
+                region_name,
+                allow_district_fallback=True,
+            )
             if point:
                 properties.append(point)
+                if point.is_approximate:
+                    warnings.append(
+                        f"{property_.title} 的刊登地址不完整，"
+                        f"地圖僅顯示行政區約略位置。"
+                    )
             else:
                 warnings.append(f"無法定位房源：{property_.title}")
         except (httpx.HTTPError, ValueError, KeyError, TypeError):

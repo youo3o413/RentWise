@@ -104,6 +104,9 @@ def enrich_commute_data(
     commute_mode: str = "transit_walk",
     needs_parking: bool = False,
     destination_coordinates: tuple[float, float] | None = None,
+    region_name: str = "",
+    include_transport: bool = True,
+    include_amenities: bool = True,
 ) -> list[Property]:
     if destination_coordinates is not None:
         destination_latitude, destination_longitude = destination_coordinates
@@ -125,6 +128,7 @@ def enrich_commute_data(
                 address=property_.address,
                 destination=destination,
                 source_url=property_.source_url,
+                region_name=region_name,
             )
         except (httpx.HTTPError, ValueError, KeyError, TypeError):
             point = None
@@ -133,45 +137,50 @@ def enrich_commute_data(
         point_by_id[property_.id] = point
         property_points.append((property_.id, point.latitude, point.longitude))
 
-    try:
-        routed = _walking_commutes(
-            (destination_latitude, destination_longitude),
-            property_points,
-        )
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        routed = {}
-    try:
-        transit_routed = transit_commutes(
-            property_points,
-            (destination_latitude, destination_longitude),
-        )
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        transit_routed = {}
-    try:
-        driving_routed = _driving_commutes(
-            (destination_latitude, destination_longitude),
-            property_points,
-        )
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        driving_routed = {}
-    try:
-        stores = find_convenience_stores(list(point_by_id.values()))
-        store_lookup_completed = True
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        stores = []
-        store_lookup_completed = False
-    if commute_mode == "drive" or needs_parking:
+    routed = {}
+    transit_routed = {}
+    driving_routed = {}
+    if include_transport:
         try:
-            parking_facilities = find_parking_facilities(
-                list(point_by_id.values())
+            routed = _walking_commutes(
+                (destination_latitude, destination_longitude),
+                property_points,
             )
-            parking_lookup_completed = True
         except (httpx.HTTPError, ValueError, KeyError, TypeError):
-            parking_facilities = []
-            parking_lookup_completed = False
-    else:
-        parking_facilities = []
-        parking_lookup_completed = False
+            pass
+        try:
+            transit_routed = transit_commutes(
+                property_points,
+                (destination_latitude, destination_longitude),
+            )
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            pass
+        try:
+            driving_routed = _driving_commutes(
+                (destination_latitude, destination_longitude),
+                property_points,
+            )
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            pass
+
+    stores = []
+    store_lookup_completed = False
+    parking_facilities = []
+    parking_lookup_completed = False
+    if include_amenities:
+        try:
+            stores = find_convenience_stores(list(point_by_id.values()))
+            store_lookup_completed = True
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            pass
+        if commute_mode == "drive" or needs_parking:
+            try:
+                parking_facilities = find_parking_facilities(
+                    list(point_by_id.values())
+                )
+                parking_lookup_completed = True
+            except (httpx.HTTPError, ValueError, KeyError, TypeError):
+                pass
 
     enriched = []
     for property_ in properties:
@@ -183,7 +192,12 @@ def enrich_commute_data(
         transit_commute = transit_routed.get(property_.id)
         walking_commute = routed.get(property_.id)
         driving_commute = driving_routed.get(property_.id)
-        if commute_mode == "drive" and driving_commute:
+        if not include_transport:
+            minutes = property_.commute_minutes
+            route_distance_km = property_.route_distance_km
+            transfers = property_.commute_transfers
+            method = property_.commute_method
+        elif commute_mode == "drive" and driving_commute:
             minutes, route_distance_km = driving_commute
             transfers = None
             method = "Valhalla 駕車路網"

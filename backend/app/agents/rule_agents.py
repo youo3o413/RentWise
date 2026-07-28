@@ -184,7 +184,7 @@ def location_assessment(property_: Property, req: UserRequirements) -> AgentAsse
                 if parking_score is not None
                 else "unknown"
             ),
-            "formula_version": "RentWise Scoring v1.2",
+            "formula_version": "RentWise Scoring v1.3",
             "commute_method": property_.commute_method or "unknown",
             "commute_transfers": (
                 property_.commute_transfers
@@ -266,7 +266,7 @@ def cost_assessment(property_: Property, req: UserRequirements) -> AgentAssessme
             "budget": req.budget,
             "cost_ratio": round(cost_ratio, 3),
             "score_available": True,
-            "formula_version": "RentWise Scoring v1.2",
+            "formula_version": "RentWise Scoring v1.3",
             "estimate_source": (
                 "openai"
                 if property_.cost_estimated_by_ai
@@ -395,6 +395,43 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
             evidence=floor_evidence,
         )
     )
+
+    if req.noise_preference != "no_preference":
+        if property_.noise_level is None:
+            noise_status = "unknown"
+            noise_evidence = "刊登未揭露安靜程度，需實地確認"
+        elif req.noise_preference == "quiet":
+            noise_status = (
+                "met" if property_.noise_level == "low" else "unmet"
+            )
+            noise_evidence = {
+                "low": "現有刊登證據顯示環境安靜",
+                "medium": "現有刊登證據顯示可能偶爾有噪音",
+                "high": "現有刊登證據顯示環境較吵",
+            }[property_.noise_level]
+        else:
+            noise_status = (
+                "met"
+                if property_.noise_level in {"low", "medium"}
+                else "unmet"
+            )
+            noise_evidence = {
+                "low": "現有刊登證據顯示環境安靜",
+                "medium": "現有刊登證據顯示一般住宅噪音程度",
+                "high": "現有刊登證據顯示環境較吵",
+            }[property_.noise_level]
+        if property_.noise_analyzed_by_ai and property_.noise_evidence:
+            noise_evidence = (
+                f"AI 語意判讀刊登原文：{property_.noise_evidence}"
+                f"（可信度 {property_.noise_confidence}）"
+            )
+        checks.append(
+            ConditionCheck(
+                label="安靜程度",
+                status=noise_status,
+                evidence=noise_evidence,
+            )
+        )
 
     searchable = " ".join(
         [
@@ -565,7 +602,7 @@ def property_assessment(property_: Property, req: UserRequirements) -> AgentAsse
             "known_match_rate": round(known_match_rate),
             "data_completeness": data_completeness,
             "score_available": known_count > 0,
-            "formula_version": "RentWise Scoring v1.2",
+            "formula_version": "RentWise Scoring v1.3",
             "ai_used": (
                 property_.vision_analyzed_by_ai
                 or property_.listing_requirements_analyzed_by_ai
@@ -602,48 +639,16 @@ def suitability_assessment(
 ) -> AgentAssessment:
     raw_weights = req.weights
     positives, concerns = [], []
-    noise_score = 0.0
-    noise_available = (
-        property_.noise_level is not None
-        and req.noise_preference != "no_preference"
-    )
-    if property_.noise_level is None:
-        concerns.append("刊登資料不足，安靜程度不納入並重新分配權重")
-    elif req.noise_preference == "quiet":
-        if property_.noise_level == "low":
-            noise_score = 100
-            positives.append("安靜程度符合偏好")
-        elif property_.noise_level == "medium":
-            noise_score = 65
-            concerns.append("環境可能偶爾有噪音")
-        else:
-            noise_score = 25
-            concerns.append("環境較吵，與安靜偏好衝突")
-    elif req.noise_preference == "balanced":
-        noise_score = {"low": 95, "medium": 85, "high": 55}[property_.noise_level]
-    else:
-        concerns.append("使用者未設定安靜程度，此項不納入權重")
-    if property_.noise_analyzed_by_ai and property_.noise_evidence:
-        noise_evidence_text = (
-            f"Property Agent AI 刊登證據：{property_.noise_evidence}"
-            f"（可信度 {property_.noise_confidence}）"
-        )
-        if property_.noise_level == "low":
-            positives.append(noise_evidence_text)
-        else:
-            concerns.append(noise_evidence_text)
 
     original_weights = {
         "location": raw_weights.location,
         "cost": raw_weights.cost,
         "property": raw_weights.property,
-        "noise": raw_weights.noise,
     }
     available = {
         "location": bool(location.metrics.get("score_available", True)),
         "cost": bool(cost.metrics.get("score_available", True)),
         "property": bool(property_result.metrics.get("score_available", True)),
-        "noise": noise_available,
     }
     active_total = sum(
         value
@@ -662,7 +667,6 @@ def suitability_assessment(
         "location": location.score,
         "cost": cost.score,
         "property": property_result.score,
-        "noise": noise_score,
     }
     contributions = {
         name: scores[name] * weights[name]
@@ -706,7 +710,6 @@ def suitability_assessment(
             "location_weight": round(weights["location"], 3),
             "cost_weight": round(weights["cost"], 3),
             "property_weight": round(weights["property"], 3),
-            "noise_weight": round(weights["noise"], 3),
             "original_location_weight": round(
                 raw_weights.location / original_total, 3
             ),
@@ -714,20 +717,16 @@ def suitability_assessment(
             "original_property_weight": round(
                 raw_weights.property / original_total, 3
             ),
-            "original_noise_weight": round(raw_weights.noise / original_total, 3),
             "location_contribution": round(contributions["location"], 1),
             "cost_contribution": round(contributions["cost"], 1),
             "property_contribution": round(contributions["property"], 1),
-            "noise_contribution": round(contributions["noise"], 1),
             "location_available": available["location"],
             "cost_available": available["cost"],
             "property_available": available["property"],
-            "noise_available": available["noise"],
             "qualified": qualified,
             "disqualifying_conflicts": "、".join(hard_conflicts),
             "evidence_coverage_percent": round(evidence_coverage),
-            "formula_version": "RentWise Scoring v1.2",
-            "noise_score": noise_score,
+            "formula_version": "RentWise Scoring v1.3",
             "noise_level": property_.noise_level or "unknown",
             "noise_evidence_source": (
                 "property_agent_openai"

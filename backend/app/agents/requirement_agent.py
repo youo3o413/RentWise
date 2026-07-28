@@ -30,7 +30,6 @@ class ParsedWeights(BaseModel):
     location: int | None = Field(None, ge=0, le=100)
     cost: int | None = Field(None, ge=0, le=100)
     property: int | None = Field(None, ge=0, le=100)
-    noise: int | None = Field(None, ge=0, le=100)
 
 
 class ParsedRequirementIntent(BaseModel):
@@ -61,8 +60,9 @@ REQUIREMENT_AGENT_INSTRUCTIONS = """
    保留目前表單值。
 3. budget 是使用者可接受的每月總預算；目的地保持使用者使用的台灣地名或校名。
 4. 「一定、必須、不要沒有」代表必要條件；「最好、希望」可轉成偏好。
-5. 若使用者表達在意程度，請同時提出 location、cost、property、noise 四項相對
-   權重並盡量加總為 100。沒有表達在意程度時 weights 回傳 null。
+5. 若使用者表達在意程度，請同時提出 location、cost、property 三項相對權重並
+   盡量加總為 100。安靜程度屬於 property 房屋條件，不設獨立權重。沒有表達
+   在意程度時 weights 回傳 null。
 6. preferences 使用精簡、可核對的繁體中文詞彙，不要重複已有的窗戶、電梯、
    便利商店或安靜程度欄位。
 7. 使用者明確說開車、駕車或有車時，commute_mode 設為 drive；需要車位時才把
@@ -90,7 +90,6 @@ def merge_requirement_intent(
                 weights.location
                 + weights.cost
                 + weights.property
-                + weights.noise
                 > 0
             ):
                 updates["weights"] = weights

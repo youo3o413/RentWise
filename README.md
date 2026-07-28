@@ -5,8 +5,8 @@
 - React + Vite 前端
 - FastAPI 後端
 - LangGraph Multi-Agent 工作流
-- Source Planning / Data Loader / Location / Cost / Property / Suitability /
-  Decision Explanation Agents
+- Requirement / Source Planning / Data Loader / Location / Cost /
+  Property / Suitability / Decision Explanation Agents
 - 無 OpenAI API Key 也能完整展示
 - 有 API Key 時，Decision Explanation Agent 會使用 OpenAI 產生更自然的決策摘要
 - 有 API Key 時，可用 Requirement Agent 將一段自然語言轉成表單條件與適配權重
@@ -18,25 +18,29 @@
 ## 系統流程
 
 ```text
-使用者需求
+Requirement Agent（OpenAI，LangGraph 外部前處理）
+   ↓ 產生 UserRequirements
+LangGraph START
    ↓
-Source Planning Agent（目的地生活圈＋來源）
-   ↓
-Load Properties（多平台載入＋去重）
-   ├── Location Agent
-   ├── Cost Agent
-   └── Property Agent
+Source Planning Agent → Data Loader
+   ├── 房源不足 → 放寬搜尋生活圈 → 回到 Data Loader
+   └── 房源足夠
           ↓
-   Suitability Agent
+   ┌──────┼────────────┐
+Location  Cost      Property
+   └──────┼────────────┘
           ↓
-   Decision Explanation Agent
+Suitability Agent → Decision Explanation Agent
           ↓
-推薦排名 + Agent 決策軌跡
+LangGraph interrupt：使用者確認推薦
+   ├── 不符合 → 更新偏好／權重 → 重新排序
+   └── 符合 → END
 ```
 
-> LangGraph 的節點透過共享 State 傳遞資料；三個專業分析 Agent 先執行，再由
-> Suitability Agent 計算適配分並完成排名，最後交給 Decision Explanation Agent
-> 產生決策說明。
+> LangGraph 從 Source Planning Agent 開始，使用共享 State、Conditional Edges、
+> 搜尋迴圈、平行 fan-out/fan-in、
+> SQLite 持久化 checkpoint 與 interrupt/resume。重新調整偏好時只重跑
+> Suitability 與 Recommendation，不會重新爬取房源或再次分析圖片。
 
 ## 1. 最快啟動方式
 
@@ -116,17 +120,29 @@ docker compose up --build
 
 按下「啟動 Multi-Agent 分析」後，展示：
 
-1. Source Planning Agent 依使用者輸入的目的地決定生活圈及搜尋來源
-2. Data Loader 同時載入 591、好房網快租即時公開刊登並跨站去重
-3. Location Agent 比較地點與生活機能
+1. Requirement Agent 在 LangGraph 外使用 OpenAI 解析自然語言，產生初始
+   `UserRequirements`；已按過「套用需求」時直接沿用表單中的解析結果
+2. Source Planning Agent 定位目的地與規劃來源；Data Loader 載入 591、好房網
+   快租並去重，房源不足時由 LangGraph 放寬生活圈後回到 Data Loader
+3. Location Agent 檢查 State；只有通勤、座標或使用者指定的生活機能資料不足時，
+   才呼叫 TDX／Valhalla／地理定位或 OpenStreetMap 工具，再回到原 Agent 判斷
 4. Cost Agent 保留已揭露費用，並以 OpenAI 公開搜尋＋結構化輸出補估所在地
    的管理費、水費、電價與用電量
 5. Property Agent 使用 OpenAI 圖片輸入，結合刊登坪數判讀窗戶與空間觀感
-6. Suitability Agent 根據個人偏好計分
-7. Decision Explanation Agent 使用 OpenAI，讀取已完成的排名、目的地脈絡與
+6. Location、Cost、Property 三個既有 Agent 以 LangGraph fan-out/fan-in
+   平行執行並合併 State
+7. Suitability Agent 根據個人偏好計分
+8. Decision Explanation Agent 使用 OpenAI，讀取已完成的排名、目的地脈絡與
    所有 Agent 結果，將 AI 估算可信度與客觀分數納入最終取捨說明；不修改名次
-8. 點「查看地圖與超商」後，載入目的地、前 6 名房源，以及房源
+9. 使用者可接受推薦，或提供回饋／調整權重後從 checkpoint 恢復並重新排序
+10. 點「查看地圖與超商」後，載入目的地、前 6 名房源，以及房源
    500 公尺內的 OpenStreetMap 便利商店與停車設施
+
+每次搜尋都會在 State 中保留 `original_search_conditions`、
+`current_search_conditions`、`relaxed_conditions` 與 `search_attempt`，因此可
+追蹤系統何時、為什麼放寬生活圈。Checkpoint 儲存在
+`backend/rentwise_checkpoints.sqlite3`；前端會在 localStorage 保存 thread ID，
+所以重新整理瀏覽器或重新啟動後端後，仍能恢復等待補充、等待確認或推薦結果。
 
 地圖右欄的目的地與房源可點選；選取後地圖會移動到該點並以動畫光圈標示。
 便利商店與停車設施僅以數量、圖例及地圖標記呈現。若抽象目的地仍無法精確定位，
@@ -142,10 +158,10 @@ Property Agent 不向使用者顯示不透明的房況分數，而是將使用�
 並結合刊登坪數描述空間是寬敞、適中或緊湊。照片沒拍到窗戶不等於沒有窗戶；
 縮圖、廣角鏡或照片不足會降低可信度。
 
-使用者可在前端調整通勤、成本、房屋條件與噪音的相對權重。四項永遠合計
-100%，可先鎖定不希望改變的項目；拖動其他滑桿時，系統只重新分配未鎖項目。
-每張推薦卡可展開查看公式版本、原始資料比例、四項原始分數、原始／有效權重、
-加權貢獻、證據覆蓋率、必要條件資格與資料完整度。
+使用者可在前端調整通勤生活圈、每月成本與房屋條件三項相對權重，三項永遠合計
+100%。安靜程度直接列入 Property Agent 的房屋條件，不再設獨立權重。可先鎖定
+不希望改變的項目；拖動其他滑桿時，系統只重新分配未鎖項目。推薦完成後也會
+直接顯示當次使用的三項滑桿，使用者不必用文字猜測應增加或減少多少。
 
 ## 5. API
 
@@ -196,8 +212,7 @@ Content-Type: application/json
   "weights": {
     "location": 30,
     "cost": 30,
-    "property": 25,
-    "noise": 15
+    "property": 40
   },
   "property_source": "multi",
   "commute_mode": "transit_walk",
@@ -274,7 +289,8 @@ Property Agent 會進一步讀取原始刊登詳情頁，讓 OpenAI 依使用者
 符合／不符合／待確認狀態；無法讀取詳情頁、OpenAI 暫時不可用或語意不明時，
 自動退回透明關鍵字規則，不會由 AI 猜測或直接產生適配分。
 使用者有設定安靜程度時，Property Agent 也會從刊登原文產生低、中、高或未知的
-噪音證據與可信度；Suitability Agent 只依這份證據套用公開公式，不自行解讀文字。
+噪音證據與可信度，再把「安靜程度」列為房屋條件的符合、不符合或待確認；
+Suitability Agent 不再為噪音建立獨立權重。
 
 ### 取得地圖與附近超商／停車設施
 
@@ -312,10 +328,11 @@ RentWise/
 
 ## 7. 競賽簡報可用說法
 
-RentWise 並非由單一聊天機器人一次產生答案，而是讓多個具有明確責任的 Agent
-讀取同一份租屋需求與房源資料。LangGraph 負責管理狀態與節點流程，專業 Agent
-分別完成地點、成本及房況分析，再由 Suitability Agent 依使用者偏好計算適配度
-並排名，最後交給 Decision Explanation Agent 產生決策說明。
+RentWise 並非由單一聊天機器人一次產生答案，而是以 LangGraph 管理共享 State、
+Conditional Edges、搜尋重試迴圈及三個既有 Agent 平行分析分支。Suitability
+Agent 使用透明公式排名，Decision Explanation Agent 只負責解釋；流程會在推薦後
+checkpoint 暫停，
+讓使用者接受結果，或更新偏好後只重新執行必要節點。
 
 ## 8. 下一步可擴充
 

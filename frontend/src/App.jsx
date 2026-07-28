@@ -24,13 +24,16 @@ import {
   getHealth,
   getMapContext,
   getRecommendation,
+  getSavedRecommendation,
   parseRequirements,
   resolveDestination,
+  sendRecommendationFeedback,
 } from "./api";
 import MapView from "./MapView";
 
 const RENT_591_URL = "https://rent.591.com.tw/";
 const HOUSEFUN_URL = "https://rent.housefun.com.tw/";
+const WORKFLOW_THREAD_KEY = "rentwise_workflow_thread_id";
 
 const initialForm = {
   budget: 15000,
@@ -46,8 +49,7 @@ const initialForm = {
   weights: {
     location: 30,
     cost: 30,
-    property: 25,
-    noise: 15,
+    property: 40,
   },
   commute_mode: "transit_walk",
   needs_parking: false,
@@ -55,6 +57,7 @@ const initialForm = {
 };
 
 const agentMeta = {
+  "Requirement Agent": { icon: Bot, label: "LangGraph 前置需求解析" },
   "Source Planning Agent": { icon: Route, label: "目的地生活圈與房源來源規劃" },
   "Data Loader": { icon: Building2, label: "房源資料載入" },
   "Location Agent": { icon: MapPin, label: "步行與大眾運輸通勤分析" },
@@ -92,7 +95,6 @@ const weightLabels = {
   location: "通勤與生活圈",
   cost: "每月成本",
   property: "房屋條件",
-  noise: "安靜程度",
 };
 
 const requirementFieldLabels = {
@@ -293,13 +295,11 @@ function AssessmentCalculation({ assessment, assessments }) {
       location: "Location",
       cost: "Cost",
       property: "Property",
-      noise: "安靜程度",
     };
     const rawScores = {
       location: assessments.location?.score,
       cost: assessments.cost?.score,
       property: assessments.property?.score,
-      noise: metrics.noise_score,
     };
     const parts = Object.keys(labels)
       .filter((key) => metrics[`${key}_available`] && Number(metrics[`${key}_weight`]) > 0)
@@ -310,9 +310,7 @@ function AssessmentCalculation({ assessment, assessments }) {
     const baseExplanation = metrics.qualified === false
       ? `但明確違反必要條件：${metrics.disqualifying_conflicts}，因此標示不合格`
       : `依可取得資料計算；證據涵蓋原權重 ${metrics.evidence_coverage_percent}%`;
-    explanation = metrics.noise_evidence_source === "property_agent_openai"
-      ? `${baseExplanation}；安靜證據：${metrics.noise_evidence}`
-      : baseExplanation;
+    explanation = baseExplanation;
   } else {
     return null;
   }
@@ -353,12 +351,6 @@ function ScoreBreakdown({ item }) {
       label: "房屋條件",
       score: item.assessments.property.score,
       available: metrics.property_available,
-    },
-    {
-      key: "noise",
-      label: "安靜程度",
-      score: metrics.noise_score,
-      available: metrics.noise_available,
     },
   ];
   const qualified = metrics.qualified !== false;
@@ -679,12 +671,30 @@ export default function App() {
   const [destinationResolution, setDestinationResolution] = useState(null);
   const [destinationResolving, setDestinationResolving] = useState(false);
   const [destinationError, setDestinationError] = useState("");
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
   const [weightLocks, setWeightLocks] = useState(
     Object.fromEntries(weightNames.map((name) => [name, false])),
   );
 
   useEffect(() => {
     getHealth().then(setHealth).catch(() => setHealth(null));
+  }, []);
+
+  useEffect(() => {
+    const threadId = window.localStorage.getItem(WORKFLOW_THREAD_KEY);
+    if (!threadId) return;
+    getSavedRecommendation(threadId)
+      .then((result) => {
+        setData(result);
+        if (result.current_weights) {
+          setForm((current) => ({
+            ...current,
+            weights: normalizeWeights(result.current_weights),
+          }));
+        }
+      })
+      .catch(() => window.localStorage.removeItem(WORKFLOW_THREAD_KEY));
   }, []);
 
   useEffect(() => {
@@ -810,9 +820,12 @@ export default function App() {
     setPage("ranking");
     setMapContext(null);
     setMapError("");
+    setFeedbackMessage("");
     try {
       const payload = {
         ...form,
+        requirement_text: requirementText.trim(),
+        requirements_parsed: Boolean(requirementResult),
         destination_resolved_address:
           destinationResolution?.resolved_address || "",
         destination_latitude: destinationResolution?.latitude ?? null,
@@ -824,6 +837,9 @@ export default function App() {
       };
       const result = await getRecommendation(payload);
       setData(result);
+      if (result.thread_id) {
+        window.localStorage.setItem(WORKFLOW_THREAD_KEY, result.thread_id);
+      }
       window.setTimeout(() => {
         document.getElementById("ranked-results")?.scrollIntoView({ behavior: "smooth" });
       }, 0);
@@ -831,6 +847,38 @@ export default function App() {
       setError(err.message || "分析失敗：請確認 FastAPI 已在 8000 port 啟動。");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function submitRecommendationFeedback(accepted) {
+    if (!data?.thread_id) return;
+    setFeedbackLoading(true);
+    setFeedbackMessage("");
+    try {
+      const feedback = {
+        accepted,
+        weights: accepted ? null : normalizeWeights(form.weights),
+      };
+      const result = await sendRecommendationFeedback(data.thread_id, feedback);
+      setData(result);
+      window.localStorage.setItem(WORKFLOW_THREAD_KEY, result.thread_id);
+      setMapContext(null);
+      setFeedbackMessage(
+        accepted
+          ? "已確認這份推薦，LangGraph 流程完成。"
+          : "已更新 State 與權重，並在保留分析結果的情況下重新排序。",
+      );
+      if (!accepted) {
+        window.setTimeout(() => {
+          document.getElementById("ranked-results")?.scrollIntoView({
+            behavior: "smooth",
+          });
+        }, 0);
+      }
+    } catch (err) {
+      setFeedbackMessage(err.message || "目前無法送出推薦回饋。");
+    } finally {
+      setFeedbackLoading(false);
     }
   }
 
@@ -844,6 +892,7 @@ export default function App() {
         destination: form.destination,
         destination_address:
           destinationResolution?.resolved_address || "",
+        region_name: destinationResolution?.region_name || "",
         destination_latitude: destinationResolution?.latitude ?? null,
         destination_longitude: destinationResolution?.longitude ?? null,
         properties: data.results.slice(0, 6).map((item) => ({
@@ -940,7 +989,10 @@ export default function App() {
             <div className="requirement-agent-input">
               <textarea
                 value={requirementText}
-                onChange={(event) => setRequirementText(event.target.value)}
+                onChange={(event) => {
+                  setRequirementText(event.target.value);
+                  setRequirementResult(null);
+                }}
                 placeholder="例如：我在輔大上課，預算一萬五，30 分鐘內到，通勤最重要，一定要有窗，附近希望有超商。"
                 rows="3"
               />
@@ -1181,14 +1233,57 @@ export default function App() {
 
         <AgentPipeline trace={data?.trace} loading={loading} />
 
-        {data && (
+        {data?.results?.length > 0 && (
           <section className="results-section" id="ranked-results">
             <div className="decision-summary">
               <div className="summary-icon"><Bot size={26} /></div>
-              <div>
-                <span className="eyebrow">COMPARISON AGENT DECISION</span>
+              <div className="decision-summary-content">
+                <span className="eyebrow">DECISION EXPLANATION AGENT</span>
                 <h2>最終決策摘要</h2>
                 <p>{data.summary}</p>
+                {data.awaiting_feedback && (
+                  <div className="recommendation-feedback">
+                    <strong>這份推薦符合你的偏好嗎？</strong>
+                    <div className="feedback-controls">
+                      <div className="feedback-weights">
+                        {weightNames.map((name) => (
+                          <WeightControl
+                            key={name}
+                            name={name}
+                            value={form.weights[name]}
+                            locked={weightLocks[name]}
+                            max={100 - weightNames
+                              .filter((other) => other !== name && weightLocks[other])
+                              .reduce((sum, other) => sum + Number(form.weights[other]), 0)}
+                            onChange={updateWeight}
+                            onToggleLock={toggleWeightLock}
+                          />
+                        ))}
+                      </div>
+                      <div className="feedback-buttons">
+                        <button
+                          type="button"
+                          onClick={() => submitRecommendationFeedback(false)}
+                          disabled={feedbackLoading}
+                        >
+                          套用權重重新排序
+                        </button>
+                        <button
+                          type="button"
+                          className="feedback-accept"
+                          onClick={() => submitRecommendationFeedback(true)}
+                          disabled={feedbackLoading}
+                        >
+                          <Check size={15} /> 符合，完成
+                        </button>
+                      </div>
+                    </div>
+                    <small>
+                      重新排序會從 Suitability Agent 繼續，不會重新搜尋或重跑圖片分析。
+                    </small>
+                  </div>
+                )}
+                {feedbackMessage && <div className="feedback-message">{feedbackMessage}</div>}
               </div>
             </div>
             <div className="results-heading">
@@ -1225,7 +1320,7 @@ export default function App() {
           </>
         )}
       </div>
-      <footer>RentWise · Agentic AI Rental Platform · LangGraph × FastAPI × React</footer>
+      <footer>RentWise · Agentic AI Rental Platform</footer>
     </main>
   );
 }

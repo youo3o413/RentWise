@@ -35,7 +35,7 @@ def test_merge_intent_preserves_unspecified_form_values():
     assert result.preferences == ["採光良好"]
     assert result.weights.location == 60
     assert result.weights.cost == 20
-    assert result.weights.property == 25
+    assert result.weights.property == 40
     assert result.property_source == "591"
 
 
