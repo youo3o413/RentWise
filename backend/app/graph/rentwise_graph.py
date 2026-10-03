@@ -7,6 +7,7 @@ from typing import Annotated, Any, Literal, TypedDict
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
+from app.config import use_mock_listings
 
 from app.agents.ai_enrichment import (
     analyze_property_images,
@@ -136,7 +137,10 @@ def search_properties_node(state: RentWiseState) -> dict:
                 agent="Data Loader",
                 status="completed" if properties else "failed",
                 message=(
-                    f"第 {attempt} 次搜尋取得 {len(properties)} 筆可居住房源；"
+                    (f"已從本機 JSON 載入 {len(properties)} 筆虛構示範房源；"
+                     if use_mock_listings(req.property_source)
+                     else f"第 {attempt} 次搜尋取得 {len(properties)} 筆可居住房源；")
+                    +
                     f"{use_message}"
                 ),
                 property_count=len(properties),
@@ -152,7 +156,18 @@ def search_route(
     count = len(state.get("properties", []))
     if count >= minimum:
         return "prepare_location_data"
-    if state.get("search_attempt", 0) < 2:
+    plan = state.get("source_plan")
+    district_scope = (
+        f"{plan.region_name}{plan.district_name}"
+        if plan and plan.district_name
+        else ""
+    )
+    if (
+        state.get("search_attempt", 0) < 2
+        and district_scope
+        and plan
+        and plan.resolved_address != district_scope
+    ):
         return "adjust_search"
     if count:
         return "prepare_location_data"
@@ -164,12 +179,12 @@ def search_route(
 
 def adjust_search_node(state: RentWiseState) -> dict:
     plan = state["source_plan"]
-    broader_address = plan.region_name or plan.resolved_address
+    broader_address = f"{plan.region_name}{plan.district_name}"
     adjusted = replace(
         plan,
         resolved_address=broader_address,
         keywords=tuple(
-            dict.fromkeys((*plan.keywords, plan.region_name))
+            dict.fromkeys((*plan.keywords, broader_address))
         ),
     )
     return {
@@ -190,7 +205,8 @@ def adjust_search_node(state: RentWiseState) -> dict:
                 agent="Search Adjustment",
                 status="completed",
                 message=(
-                    f"房源不足，已將搜尋範圍放寬至 {plan.region_name}，"
+                    f"房源不足，已將搜尋範圍放寬至 {broader_address}，"
+                    "不會擴大到整個縣市；"
                     "保留使用者評分條件不變"
                 ),
                 property_count=len(state.get("properties", [])),
@@ -576,9 +592,16 @@ def decision_explanation_node(state: RentWiseState) -> dict:
         )
     ranked.sort(
         key=lambda item: (
-            bool(item["assessments"]["suitability"].metrics.get(
-                "qualified", True
-            )),
+            {
+                "qualified": 2,
+                "needs_verification": 1,
+            }.get(
+                item["assessments"]["suitability"].metrics.get(
+                    "qualification_status",
+                    "qualified",
+                ),
+                0,
+            ),
             item["total_score"],
             item["assessments"]["property"].metrics.get(
                 "data_completeness", 0
@@ -589,12 +612,23 @@ def decision_explanation_node(state: RentWiseState) -> dict:
     for index, item in enumerate(ranked, start=1):
         item["rank"] = index
         suitability = item["assessments"]["suitability"]
-        if not suitability.metrics.get("qualified", True):
-            conflicts = suitability.metrics.get(
-                "disqualifying_conflicts", "必要條件"
+        qualification_status = suitability.metrics.get(
+            "qualification_status",
+            "qualified",
+        )
+        if qualification_status == "needs_verification":
+            issues = list(
+                filter(
+                    None,
+                    (
+                        suitability.metrics.get("disqualifying_conflicts", ""),
+                        suitability.metrics.get("pending_conditions", ""),
+                    ),
+                )
             )
             item["recommendation"] = (
-                f"不符合必要條件（{conflicts}），不建議列為合格候選。"
+                f"仍有條件需要確認（{'、'.join(issues) or '必要條件'}），"
+                "目前列為待確認候選。"
             )
         elif index == 1:
             item["recommendation"] = "最符合目前需求，建議優先安排看房。"

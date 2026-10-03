@@ -139,8 +139,20 @@ DESTINATION_PRESETS = (
 
 def resolve_591_location(destination: str) -> dict[str, int]:
     normalized = destination.strip()
+    nearby_label = re.sub(
+        r"(?:附近|周邊|一帶|旁邊)$",
+        "",
+        normalized,
+    ).strip()
     for aliases, params in DESTINATION_PRESETS:
-        if any(alias in normalized for alias in aliases):
+        if any(
+            (
+                normalized == alias
+                or nearby_label == alias
+                or (len(alias) >= 4 and alias in normalized)
+            )
+            for alias in aliases
+        ):
             return params.copy()
 
     region = next(

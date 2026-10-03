@@ -307,6 +307,85 @@ def test_location_score_uses_commute_ratio_instead_of_starting_at_100():
     ).score == 50
 
 
+def test_suitability_rejects_property_over_commute_limit():
+    requirements = UserRequirements(
+        max_commute_minutes=25,
+        needs_window=False,
+        property_source="591",
+    )
+    property_ = _property(commute_minutes=40)
+    result = suitability_assessment(
+        property_,
+        requirements,
+        location_assessment(property_, requirements),
+        _assessment("Cost Agent", 100),
+        _assessment("Property Agent", 100),
+    )
+
+    assert result.metrics["qualified"] is False
+    assert "通勤時間上限" in result.metrics["disqualifying_conflicts"]
+
+
+def test_suitability_does_not_promote_unlocated_property():
+    requirements = UserRequirements(
+        max_commute_minutes=25,
+        needs_window=False,
+        property_source="591",
+    )
+    property_ = _property(commute_minutes=None)
+    result = suitability_assessment(
+        property_,
+        requirements,
+        location_assessment(property_, requirements),
+        _assessment("Cost Agent", 100),
+        _assessment("Property Agent", 100),
+    )
+
+    assert result.metrics["qualified"] is False
+    assert result.metrics["qualification_status"] == "needs_verification"
+    assert "通勤時間" in result.metrics["pending_conditions"]
+
+
+def test_suitability_rejects_property_over_total_budget():
+    requirements = UserRequirements(
+        budget=15000,
+        needs_window=False,
+        needs_convenience_store=False,
+        property_source="591",
+    )
+    property_ = _property(rent=16000, commute_minutes=20)
+    cost_result = cost_assessment(property_, requirements)
+    result = suitability_assessment(
+        property_,
+        requirements,
+        location_assessment(property_, requirements),
+        cost_result,
+        _assessment("Property Agent", 100),
+    )
+
+    assert result.metrics["qualification_status"] == "needs_verification"
+    assert "每月總預算" in result.metrics["disqualifying_conflicts"]
+
+
+def test_suitability_marks_unrevealed_required_window_as_pending():
+    requirements = UserRequirements(
+        needs_window=True,
+        needs_convenience_store=False,
+        property_source="591",
+    )
+    property_ = _property(has_window=None, commute_minutes=20)
+    result = suitability_assessment(
+        property_,
+        requirements,
+        location_assessment(property_, requirements),
+        _assessment("Cost Agent", 100),
+        property_assessment(property_, requirements),
+    )
+
+    assert result.metrics["qualification_status"] == "needs_verification"
+    assert "對外窗" in result.metrics["pending_conditions"]
+
+
 def test_location_splits_commute_and_store_only_when_store_is_requested():
     property_ = _property(
         commute_minutes=25,

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     tdx_client_id: str = ""
     tdx_client_secret: str = ""
+    live_listing_sources_enabled: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -19,3 +20,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def use_mock_listings(property_source: str) -> bool:
+    return property_source == "mock" or not get_settings().live_listing_sources_enabled

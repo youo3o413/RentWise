@@ -8,15 +8,25 @@ from app.models.schemas import UserRequirements
 def build_rule_summary(ranked: list[dict[str, Any]]) -> str:
     best = ranked[0]
     property_ = best["property"]
-    qualified = bool(
-        best["assessments"]["suitability"].metrics.get("qualified", True)
+    qualification_status = best["assessments"]["suitability"].metrics.get(
+        "qualification_status",
+        "qualified",
     )
-    if not qualified:
+    if qualification_status == "needs_verification":
+        suitability_metrics = best["assessments"]["suitability"].metrics
+        issues = "、".join(
+            filter(
+                None,
+                (
+                    suitability_metrics.get("disqualifying_conflicts", ""),
+                    suitability_metrics.get("pending_conditions", ""),
+                ),
+            )
+        )
         return (
-            "目前沒有房源符合全部必要條件。參考分最高的是"
-            f"「{property_.title}」，但明確衝突為"
-            f"{best['assessments']['suitability'].metrics.get('disqualifying_conflicts', '必要條件')}；"
-            "建議調整條件或擴大搜尋範圍，而不是直接簽約。"
+            f"目前分數最高的是「{property_.title}」，但"
+            f"{issues or '必要條件'}仍待確認，"
+            "因此只能列為待確認候選；確認刊登內容或詢問房東後才能視為合格。"
         )
     return (
         f"綜合多個 Agent 的分析，首選為「{property_.title}」，"
@@ -51,6 +61,9 @@ def generate_decision_explanation(
                     "qualified",
                     True,
                 ),
+                "qualification_status": item["assessments"][
+                    "suitability"
+                ].metrics.get("qualification_status", "qualified"),
                 "disqualifying_conflicts": item["assessments"][
                     "suitability"
                 ].metrics.get("disqualifying_conflicts", ""),

@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 function formatErrorDetail(detail, fallback) {
   if (typeof detail === "string" && detail.trim()) return detail;
@@ -57,16 +57,6 @@ export async function getRecommendation(requirements) {
   });
   if (!response.ok) {
     throw new Error(await responseError(response, "分析失敗"));
-  }
-  return response.json();
-}
-
-export async function getSavedRecommendation(threadId) {
-  const response = await fetch(
-    `${API_BASE}/api/recommend/${encodeURIComponent(threadId)}`,
-  );
-  if (!response.ok) {
-    throw new Error(await responseError(response, "無法恢復推薦流程"));
   }
   return response.json();
 }

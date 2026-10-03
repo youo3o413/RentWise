@@ -24,17 +24,20 @@ import {
   getHealth,
   getMapContext,
   getRecommendation,
-  getSavedRecommendation,
   parseRequirements,
   resolveDestination,
   sendRecommendationFeedback,
 } from "./api";
 import MapView from "./MapView";
 
-const RENT_591_URL = "https://rent.591.com.tw/";
-const HOUSEFUN_URL = "https://rent.housefun.com.tw/";
-const WORKFLOW_THREAD_KEY = "rentwise_workflow_thread_id";
-
+const NTU_DESTINATION = {
+  resolved_label: "台北市 · 大安區 · 國立臺灣大學（公館校區）",
+  resolved_address: "台北市大安區羅斯福路四段 1 號",
+  region_name: "台北市",
+  latitude: 25.0174,
+  longitude: 121.5397,
+  source: "demo_landmark",
+};
 const initialForm = {
   budget: 15000,
   destination: "政治大學",
@@ -45,7 +48,7 @@ const initialForm = {
   needs_convenience_store: true,
   max_floor_without_elevator: 3,
   preferences: ["採光良好", "可開伙"],
-  property_source: "multi",
+  property_source: "mock",
   weights: {
     location: 30,
     cost: 30,
@@ -58,10 +61,10 @@ const initialForm = {
 
 const agentMeta = {
   "Requirement Agent": { icon: Bot, label: "LangGraph 前置需求解析" },
-  "Source Planning Agent": { icon: Route, label: "目的地生活圈與房源來源規劃" },
-  "Data Loader": { icon: Building2, label: "房源資料載入" },
+  "Source Planning Agent": { icon: Route, label: "台大生活圈示範資料規劃" },
+  "Data Loader": { icon: Building2, label: "載入本機虛構示範房源" },
   "Location Agent": { icon: MapPin, label: "步行與大眾運輸通勤分析" },
-  "Cost Agent": { icon: CircleDollarSign, label: "真實生活成本估算" },
+  "Cost Agent": { icon: CircleDollarSign, label: "每月租屋成本估算" },
   "Property Agent": { icon: Home, label: "房況與設備檢查" },
   "Suitability Agent": { icon: ShieldCheck, label: "個人適配度評估" },
   "Decision Explanation Agent": { icon: Bot, label: "依既定排名產生決策說明" },
@@ -225,16 +228,20 @@ function AgentPipeline({ trace, loading }) {
   );
 }
 
-function ScoreRing({ score, qualified = true }) {
+function ScoreRing({ score, status = "qualified" }) {
   const rounded = Math.round(score);
+  const visibleStatus = status === "qualified" ? "qualified" : "needs_verification";
+  const label = visibleStatus === "qualified"
+    ? "合格"
+    : "待確認";
   return (
     <div
-      className={`score-ring ${qualified ? "" : "disqualified"}`}
+      className={`score-ring ${visibleStatus}`}
       style={{ "--score": `${rounded * 3.6}deg` }}
     >
       <div>
         <strong>{rounded}</strong>
-        <span>{qualified ? "適配分" : "不合格"}</span>
+        <span>{label}</span>
       </div>
     </div>
   );
@@ -307,9 +314,12 @@ function AssessmentCalculation({ assessment, assessments }) {
         `${labels[key]} ${Number(rawScores[key]).toFixed(1)} × ${(Number(metrics[`${key}_weight`]) * 100).toFixed(1)}%`
       ));
     calculation = `${parts.join(" ＋ ")} ＝ ${score} 分`;
-    const baseExplanation = metrics.qualified === false
-      ? `但明確違反必要條件：${metrics.disqualifying_conflicts}，因此標示不合格`
-      : `依可取得資料計算；證據涵蓋原權重 ${metrics.evidence_coverage_percent}%`;
+    const issues = [metrics.disqualifying_conflicts, metrics.pending_conditions]
+      .filter(Boolean)
+      .join("、");
+    const baseExplanation = metrics.qualification_status === "needs_verification"
+        ? `仍有條件或風險待確認：${issues}`
+        : `必要條件皆有證據符合；證據涵蓋原權重 ${metrics.evidence_coverage_percent}%`;
     explanation = baseExplanation;
   } else {
     return null;
@@ -353,7 +363,10 @@ function ScoreBreakdown({ item }) {
       available: metrics.property_available,
     },
   ];
-  const qualified = metrics.qualified !== false;
+  const qualificationStatus = metrics.qualification_status === "qualified"
+    ? "qualified"
+    : "needs_verification";
+  const qualified = qualificationStatus === "qualified";
   return (
     <details className="score-breakdown">
       <summary>適配分怎麼算？</summary>
@@ -382,14 +395,24 @@ function ScoreBreakdown({ item }) {
           </span>
         )})}
         {!qualified && (
-          <span className="qualification-fail">
+          <span className={`qualification-fail ${qualificationStatus}`}>
             <strong>必要條件資格</strong>
-            <i>{metrics.disqualifying_conflicts}</i>
-            <b>不合格</b>
+            <i>
+              {qualificationStatus === "needs_verification"
+                ? [metrics.disqualifying_conflicts, metrics.pending_conditions]
+                    .filter(Boolean)
+                    .join("、")
+                : ""}
+            </i>
+            <b>待確認</b>
           </span>
         )}
         <span className="score-total">
-          <strong>{qualified ? "最終適配分" : "參考分數（不合格）"}</strong><i />
+          <strong>
+            {qualified
+              ? "最終適配分"
+              : "參考分數（待確認）"}
+          </strong><i />
           <b>{Number(item.total_score).toFixed(1)}</b>
         </span>
         <div className="score-evidence">
@@ -462,13 +485,30 @@ function ResultCard({ item }) {
   const [activeImage, setActiveImage] = useState(0);
   const p = item.property;
   const images = [...new Set([p.image_url, ...(p.image_urls || [])].filter(Boolean))].slice(0, 6);
+  const sourceLinks = (p.source_links?.length
+    ? p.source_links
+    : [{ name: p.source_name || "租屋平台", url: p.source_url }]
+  ).filter((link) => link.url?.trim());
   const propertyAssessment = item.assessments.property;
-  const qualified = item.assessments.suitability.metrics.qualified !== false;
+  const qualificationStatus =
+    item.assessments.suitability.metrics.qualification_status === "qualified"
+      ? "qualified"
+      : "needs_verification";
+  const qualified = qualificationStatus === "qualified";
   return (
-    <article className={`result-card ${item.rank === 1 && qualified ? "winner" : ""} ${qualified ? "" : "ineligible"}`}>
+    <article className={`result-card ${item.rank === 1 && qualified ? "winner" : ""} ${qualificationStatus}`}>
       <div className="rank-badge">#{item.rank}</div>
       <div className="property-gallery">
-        <img className="property-main-image" src={images[activeImage]} alt={`${p.title} 房源照片 ${activeImage + 1}`} />
+        {images.length ? (
+          <img className="property-main-image" src={images[activeImage] || images[0]} alt={`${p.title} 房源照片 ${activeImage + 1}`} />
+        ) : (
+          <div className="property-image-placeholder">
+            <Building2 size={52} strokeWidth={1.25} aria-hidden="true" />
+            <strong>虛構示範房源</strong>
+            <span>用於需求比較，無實際刊登照片</span>
+            {p.listing_area_ping && <small>{p.listing_area_ping} 坪 · NT$ {p.rent.toLocaleString()}／月</small>}
+          </div>
+        )}
         {images.length > 1 && (
           <div className="property-thumbnails" aria-label="房源照片">
             {images.map((image, index) => (
@@ -497,7 +537,7 @@ function ResultCard({ item }) {
           </div>
           <ScoreRing
             score={item.total_score}
-            qualified={qualified}
+            status={qualificationStatus}
           />
         </div>
 
@@ -564,12 +604,9 @@ function ResultCard({ item }) {
 
         <p className="recommendation">{item.recommendation}</p>
 
-        {(p.source_links?.length || p.source_url) && (
+        {sourceLinks.length > 0 && (
           <div className="property-source-links">
-            {(p.source_links?.length
-              ? p.source_links
-              : [{ name: p.source_name || "租屋平台", url: p.source_url }]
-            ).map((link) => (
+            {sourceLinks.map((link) => (
               <a
                 className="property-source-link"
                 href={link.url}
@@ -636,8 +673,8 @@ function ResultCard({ item }) {
                     {" · "}資料 {assessment.metrics.data_completeness}%
                 </b>
                 ) : assessment.agent === "Suitability Agent"
-                  && assessment.metrics.qualified === false ? (
-                  <b className="assessment-unqualified">不合格</b>
+                  && assessment.metrics.qualification_status !== "qualified" ? (
+                  <b className="assessment-unknown">待確認</b>
                 ) : assessment.metrics.score_available === false ? (
                   <b className="assessment-unknown">待確認</b>
                 ) : (
@@ -682,25 +719,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const threadId = window.localStorage.getItem(WORKFLOW_THREAD_KEY);
-    if (!threadId) return;
-    getSavedRecommendation(threadId)
-      .then((result) => {
-        setData(result);
-        if (result.current_weights) {
-          setForm((current) => ({
-            ...current,
-            weights: normalizeWeights(result.current_weights),
-          }));
-        }
-      })
-      .catch(() => window.localStorage.removeItem(WORKFLOW_THREAD_KEY));
-  }, []);
-
-  useEffect(() => {
     const query = form.destination.trim();
     if (!query) {
       setDestinationResolution(null);
+      setDestinationError("");
+      setDestinationResolving(false);
+      return undefined;
+    }
+    if (["台灣大學", "國立台灣大學", "台大"].includes(query.replaceAll("臺", "台"))) {
+      setDestinationResolution(NTU_DESTINATION);
       setDestinationError("");
       setDestinationResolving(false);
       return undefined;
@@ -728,13 +755,9 @@ export default function App() {
   }, [form.destination]);
 
   const modeLabel = useMemo(() => {
-    if (data?.property_source === "multi" && data?.mode === "ai") return "Multi-source · OpenAI";
-    if (data?.property_source === "multi") return "Multi-source · Rules";
-    if (data?.property_source === "591" && data?.mode === "ai") return "591 live · OpenAI";
-    if (data?.property_source === "591") return "591 live · Rules";
-    if (data?.mode === "ai") return "OpenAI AI mode";
-    if (health?.openai_enabled) return "OpenAI ready";
-    return "Rules mode";
+    if (data?.mode === "ai") return "示範資料 · OpenAI";
+    if (!data && health?.openai_enabled) return "示範資料 · OpenAI ready";
+    return "示範資料 · Rules";
   }, [data, health]);
   const normalizedWeights = useMemo(() => {
     const total = Object.values(form.weights).reduce(
@@ -782,6 +805,14 @@ export default function App() {
     setWeightLocks((current) => ({ ...current, [name]: !current[name] }));
   }
 
+  function togglePetPreference(checked) {
+    setPreferenceText((current) => {
+      const preferences = current.split(/[、,，]/).map((value) => value.trim()).filter(Boolean);
+      return [...preferences.filter((value) => value !== "可養寵物"), ...(checked ? ["可養寵物"] : [])].join("、");
+    });
+    setRequirementResult(null);
+  }
+
   async function applyNaturalLanguageRequirements() {
     setRequirementLoading(true);
     setRequirementError("");
@@ -789,6 +820,7 @@ export default function App() {
     try {
       const current = {
         ...form,
+        property_source: "mock",
         budget: Number(form.budget),
         max_commute_minutes: Number(form.max_commute_minutes),
         max_floor_without_elevator: Number(form.max_floor_without_elevator),
@@ -800,6 +832,7 @@ export default function App() {
       const result = await parseRequirements(requirementText, current);
       setForm({
         ...result.requirements,
+        property_source: "mock",
         weights: normalizeWeights(result.requirements.weights),
       });
       setPreferenceText(result.requirements.preferences.join("、"));
@@ -824,6 +857,7 @@ export default function App() {
     try {
       const payload = {
         ...form,
+        property_source: "mock",
         requirement_text: requirementText.trim(),
         requirements_parsed: Boolean(requirementResult),
         destination_resolved_address:
@@ -837,9 +871,6 @@ export default function App() {
       };
       const result = await getRecommendation(payload);
       setData(result);
-      if (result.thread_id) {
-        window.localStorage.setItem(WORKFLOW_THREAD_KEY, result.thread_id);
-      }
       window.setTimeout(() => {
         document.getElementById("ranked-results")?.scrollIntoView({ behavior: "smooth" });
       }, 0);
@@ -861,7 +892,6 @@ export default function App() {
       };
       const result = await sendRecommendationFeedback(data.thread_id, feedback);
       setData(result);
-      window.localStorage.setItem(WORKFLOW_THREAD_KEY, result.thread_id);
       setMapContext(null);
       setFeedbackMessage(
         accepted
@@ -924,24 +954,6 @@ export default function App() {
         <nav>
           <div className="brand"><div><Home size={21} /></div><strong>RentWise</strong></div>
           <div className="nav-actions">
-            <a
-              className="source-link source-link-nav"
-              href={RENT_591_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="在新分頁開啟 591 租屋"
-            >
-              591 <ExternalLink size={15} />
-            </a>
-            <a
-              className="source-link source-link-nav"
-              href={HOUSEFUN_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="在新分頁開啟好房網快租"
-            >
-              好房網 <ExternalLink size={15} />
-            </a>
             <span className="mode-badge"><span />{modeLabel}</span>
           </div>
         </nav>
@@ -993,7 +1005,7 @@ export default function App() {
                   setRequirementText(event.target.value);
                   setRequirementResult(null);
                 }}
-                placeholder="例如：我在輔大上課，預算一萬五，30 分鐘內到，通勤最重要，一定要有窗，附近希望有超商。"
+                placeholder="例如：我在政大上課，預算一萬五，25 分鐘內到，要能養貓、可開伙、有對外窗，希望安靜。"
                 rows="3"
               />
               <button
@@ -1089,7 +1101,7 @@ export default function App() {
           >
             <span>
               <strong>調整詳細條件</strong>
-              <small>預算、設備、樓層與適配權重</small>
+              <small>預算、寵物、設備、樓層與適配權重</small>
             </span>
             {advancedOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
@@ -1100,7 +1112,7 @@ export default function App() {
             <Field label="每月總預算" hint="包含管理費與預估水電">
               <div className="input-prefix"><span>NT$</span><input type="number" value={form.budget} onChange={(e) => update("budget", e.target.value)} /></div>
             </Field>
-            <Field label="通勤目的地" hint="可輸入縣市＋行政區、支援的大學或地標">
+            <Field label="通勤目的地" hint="預設為政大；示範房源仍位於台大周邊，到其他目的地的通勤會重新計算">
               <input value={form.destination} onChange={(e) => update("destination", e.target.value)} />
               {destinationResolving && (
                 <span className="destination-resolution loading">
@@ -1115,7 +1127,9 @@ export default function App() {
                   <small>
                     {destinationResolution.source === "openstreetmap"
                       ? "OpenStreetMap 實際座標"
-                      : "行政區規則"}
+                      : destinationResolution.source === "demo_landmark"
+                        ? "台大校區參考座標"
+                        : "行政區規則"}
                   </small>
                 </span>
               )}
@@ -1128,7 +1142,7 @@ export default function App() {
             </Field>
             <Field
               label="最長大眾運輸／步行時間"
-              hint="TDX 大眾運輸優先；無適合班次時採真實步行路網"
+              hint="以預先設定的示範通勤時間比較房源"
             >
               <div className="input-suffix"><input type="number" value={form.max_commute_minutes} onChange={(e) => update("max_commute_minutes", e.target.value)} /><span>分鐘</span></div>
             </Field>
@@ -1141,7 +1155,7 @@ export default function App() {
             </Field>
             <Field
               label="主要通勤方式"
-              hint="仍會同時計算其他可取得的交通方式供比較"
+              hint="使用示範資料中的大眾運輸／步行或駕車時間"
             >
               <select
                 value={form.commute_mode}
@@ -1154,6 +1168,7 @@ export default function App() {
           </div>
 
           <div className="toggle-grid">
+            <Toggle checked={displayPreferences.includes("可養寵物")} onChange={togglePetPreference} label="需要可養寵物" />
             <Toggle checked={form.needs_window} onChange={(v) => update("needs_window", v)} label="需要對外窗" />
             <Toggle checked={form.needs_elevator} onChange={(v) => update("needs_elevator", v)} label="一定要有電梯" />
             <Toggle checked={form.needs_convenience_store} onChange={(v) => update("needs_convenience_store", v)} label="附近需有便利商店" />
@@ -1194,8 +1209,8 @@ export default function App() {
             <Field label="無電梯可接受最高樓層">
               <div className="input-suffix"><input type="number" value={form.max_floor_without_elevator} onChange={(e) => update("max_floor_without_elevator", e.target.value)} /><span>樓</span></div>
             </Field>
-            <Field label="其他偏好" hint="使用頓號或逗號分隔">
-              <input value={preferenceText} onChange={(e) => setPreferenceText(e.target.value)} placeholder="採光良好、可開伙" />
+            <Field label="其他偏好" hint="使用頓號或逗號分隔；可填可養貓、可開伙、隔音良好等">
+              <input value={preferenceText} onChange={(e) => setPreferenceText(e.target.value)} placeholder="採光良好、可開伙、可養寵物" />
             </Field>
           </div>
           </div>
@@ -1206,26 +1221,8 @@ export default function App() {
           </button>
           <div className="listing-source">
             <div>
-              <strong>目前整合 591＋好房網即時刊登</strong>
-              <span>Source Planning Agent 會依目的地與預算規劃搜尋，再跨平台去重與排名。</span>
-            </div>
-            <div className="listing-source-actions">
-              <a
-                className="source-link"
-                href={RENT_591_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                591 <ExternalLink size={16} />
-              </a>
-              <a
-                className="source-link"
-                href={HOUSEFUN_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                好房網 <ExternalLink size={16} />
-              </a>
+              <strong>台大生活圈 · 虛構示範房源</strong>
+              <span>房源與租金皆為虛構，無實際可租物件。到台大的通勤時間為示範設定，到政大等其他目的地會重新計算。可調整寵物、開伙、預算與設備需求，觀察排名差異。</span>
             </div>
           </div>
           {error && <p className="error">{error}</p>}
@@ -1290,15 +1287,11 @@ export default function App() {
               <div>
                 <span className="eyebrow">RANKED RESULTS</span>
                 <h2>
-                  {data.property_source === "multi"
-                    ? "多平台房源推薦排名"
-                    : data.property_source === "591"
-                      ? "591 房源推薦排名"
-                      : "房源推薦排名"}
+                  示範房源推薦排名
                 </h2>
               </div>
               <div className="results-actions">
-                <span>{data.results.length} 筆房源完成分析</span>
+                <span>{data.results.length} 筆示範房源完成分析</span>
                 <button type="button" className="map-button" onClick={openMap}>
                   <MapPinned size={18} /> 查看地圖與超商
                 </button>
@@ -1320,7 +1313,7 @@ export default function App() {
           </>
         )}
       </div>
-      <footer>RentWise · Agentic AI Rental Platform</footer>
+      <footer>RentWise · 台大生活圈示範資料 · 房源與租金皆為虛構</footer>
     </main>
   );
 }

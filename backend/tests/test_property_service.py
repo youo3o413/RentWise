@@ -1,5 +1,9 @@
 from app.models.schemas import Property, PropertySourceLink
-from app.services.property_service import merge_and_dedupe_properties
+from app.services.property_service import (
+    _properties_in_planned_area,
+    merge_and_dedupe_properties,
+)
+from app.services.source_planning_service import SourceSearchPlan
 
 
 def make_property(
@@ -56,6 +60,28 @@ def test_merge_duplicate_keeps_both_source_links():
         "591租屋",
         "好房網快租",
     }
+
+
+def test_taida_plan_filters_out_tainan_keyword_result():
+    taipei = make_property(
+        "taipei",
+        "591租屋",
+        "https://rent.591.com.tw/taipei",
+    ).model_copy(update={"address": "台北市大安區羅斯福路四段"})
+    tainan = make_property(
+        "tainan",
+        "好房網快租",
+        "https://rent.housefun.com.tw/rent/house/tainan/",
+    ).model_copy(update={"address": "台南市東區大學路"})
+    plan = SourceSearchPlan(
+        destination="台大",
+        region_name="台北市",
+        district_name="大安區",
+        keywords=("台大",),
+        sources=("591租屋", "好房網快租"),
+    )
+
+    assert _properties_in_planned_area([taipei, tainan], plan) == [taipei]
 
 
 def test_merge_processes_later_sources_before_limit():

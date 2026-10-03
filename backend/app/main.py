@@ -1,10 +1,13 @@
 from uuid import uuid4
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from langgraph.types import Command
 
-from app.config import get_settings
+from app.config import get_settings, use_mock_listings
 from app.graph.rentwise_graph import rentwise_graph
 from app.agents.requirement_agent import (
     RequirementAgentAuthenticationError,
@@ -32,6 +35,7 @@ from app.services.map_service import build_map_context
 from app.services.destination_service import resolve_destination
 
 settings = get_settings()
+frontend_directory = Path(__file__).resolve().parents[1] / "static"
 
 app = FastAPI(
     title="RentWise API",
@@ -49,8 +53,14 @@ app.add_middleware(
 
 
 @app.get("/")
-def root() -> dict[str, str]:
+def root():
+    if (frontend_directory / "index.html").is_file():
+        return FileResponse(frontend_directory / "index.html")
     return {"message": "RentWise API is running", "docs": "/docs"}
+
+
+if (frontend_directory / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=frontend_directory / "assets"), name="assets")
 
 
 @app.get("/api/health")
@@ -123,6 +133,8 @@ def recommend(request: RecommendationRequest) -> RecommendationResponse:
                 requirement_message = (
                     f"已在 LangGraph 前完成需求解析：{parsed.interpretation}"
                 )
+        if use_mock_listings(requirements.property_source):
+            requirements = requirements.model_copy(update={"property_source": "mock"})
         requirement_trace = AgentTrace(
             agent="Requirement Agent",
             status="completed",

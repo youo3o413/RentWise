@@ -18,9 +18,9 @@ def test_health():
     assert response.json()["status"] == "ok"
 
 
-def test_recommendation_returns_ranked_live_properties(monkeypatch):
+def test_legacy_live_request_is_routed_to_mock_properties(monkeypatch):
     def fake_invoke(state, config=None):
-        assert state["requirements"].property_source == "multi"
+        assert state["requirements"].property_source == "mock"
         assert state["requirements"].destination == "台灣大學"
         assert state["trace"][0].agent == "Requirement Agent"
         assert "LangGraph 前" in state["trace"][0].message
@@ -130,7 +130,7 @@ def test_recommendation_returns_ranked_live_properties(monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert len(body["results"]) == 1
-    assert body["property_source"] == "multi"
+    assert body["property_source"] == "mock"
     assert body["mode"] == "rules"
     assert body["results"][0]["rank"] == 1
     assert body["current_weights"] == {

@@ -1,5 +1,12 @@
 # RentWise：AI Agent 智慧租屋決策平台
 
+目前網站使用 **18 筆台灣大學周邊虛構示範房源**，預設不從 591 或好房網抓取資料。
+資料、差異總覽及測試情境見 [示範資料說明](backend/app/data/README.md)，
+可直接編輯 [mock_properties.json](backend/app/data/mock_properties.json)。
+預設目的地為政治大學，前端提供「需要可養寵物」選項；假房源仍位於台大周邊，前往政大的通勤會重新計算。
+伺服器的 `LIVE_LISTING_SOURCES_ENABLED` 預設為 `false`；舊版 `multi`／`591`
+請求也會改用假資料。以下即時來源說明保留作為原有模式的技術參考。
+
 可直接用於競賽 Live Demo 的完整 MVP：
 
 - React + Vite 前端
@@ -141,8 +148,8 @@ docker compose up --build
 每次搜尋都會在 State 中保留 `original_search_conditions`、
 `current_search_conditions`、`relaxed_conditions` 與 `search_attempt`，因此可
 追蹤系統何時、為什麼放寬生活圈。Checkpoint 儲存在
-`backend/rentwise_checkpoints.sqlite3`；前端會在 localStorage 保存 thread ID，
-所以重新整理瀏覽器或重新啟動後端後，仍能恢復等待補充、等待確認或推薦結果。
+`backend/rentwise_checkpoints.sqlite3`。前端只在目前頁面保留 thread ID，重新整理
+瀏覽器後會回到初始畫面，不會自動載入前一次的條件或推薦結果。
 
 地圖右欄的目的地與房源可點選；選取後地圖會移動到該點並以動畫光圈標示。
 便利商店與停車設施僅以數量、圖例及地圖標記呈現。若抽象目的地仍無法精確定位，

@@ -86,6 +86,47 @@ def _stub_external_analysis(monkeypatch):
     )
 
 
+def test_search_adjustment_stays_inside_destination_district():
+    plan = SourceSearchPlan(
+        destination="裕隆城",
+        region_name="新北市",
+        district_name="新店區",
+        keywords=("裕隆城",),
+        sources=("591租屋", "好房網快租"),
+        resolved_address="裕隆城, 新店區, 新北市",
+    )
+    state = {
+        "source_plan": plan,
+        "properties": [_property(1)],
+        "minimum_properties": 4,
+        "search_attempt": 1,
+        "relaxed_conditions": [],
+    }
+
+    assert graph_module.search_route(state) == "adjust_search"
+    adjusted = graph_module.adjust_search_node(state)
+    assert adjusted["source_plan"].resolved_address == "新北市新店區"
+    assert adjusted["current_search_conditions"]["scope"] == "新北市新店區"
+    assert "新北市" not in adjusted["source_plan"].keywords
+
+
+def test_search_does_not_expand_to_whole_city_without_district():
+    state = {
+        "source_plan": SourceSearchPlan(
+            destination="測試地標",
+            region_name="新北市",
+            keywords=("測試地標",),
+            sources=("591租屋",),
+            resolved_address="測試地標",
+        ),
+        "properties": [_property(1)],
+        "minimum_properties": 4,
+        "search_attempt": 1,
+    }
+
+    assert graph_module.search_route(state) == "prepare_location_data"
+
+
 def test_graph_runs_parallel_agents_and_finishes_when_auto_accepted(monkeypatch):
     _stub_external_analysis(monkeypatch)
     thread_id = str(uuid4())

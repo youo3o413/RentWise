@@ -31,7 +31,7 @@ class UserRequirements(BaseModel):
     needs_convenience_store: bool = True
     max_floor_without_elevator: int = Field(3, ge=1, le=20)
     preferences: list[str] = Field(default_factory=list)
-    property_source: Literal["multi", "591"] = "multi"
+    property_source: Literal["mock", "multi", "591"] = "mock"
     weights: SuitabilityWeights = Field(default_factory=SuitabilityWeights)
     commute_mode: CommuteMode = "transit_walk"
     needs_parking: bool = False
@@ -147,7 +147,7 @@ class Property(BaseModel):
     risks: list[str]
     description: str
     listing_text: str = Field("", exclude=True)
-    listing_text_source: Literal["listing_card", "detail_page"] = "listing_card"
+    listing_text_source: Literal["mock", "listing_card", "detail_page"] = "listing_card"
     listing_requirements_analyzed_by_ai: bool = False
     listing_requirement_summary: str = ""
     listing_requirement_checks: list[ListingRequirementEvidence] = Field(
@@ -201,7 +201,7 @@ class AgentTrace(BaseModel):
 
 class RecommendationResponse(BaseModel):
     mode: Literal["ai", "rules"] = "rules"
-    property_source: Literal["multi", "591"]
+    property_source: Literal["mock", "multi", "591"]
     summary: str = ""
     results: list[PropertyResult] = Field(default_factory=list)
     trace: list[AgentTrace] = Field(default_factory=list)

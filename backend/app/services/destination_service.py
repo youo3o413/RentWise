@@ -37,30 +37,78 @@ def _compact_label(region_name: str, district_name: str, landmark: str) -> str:
     return " · ".join(dict.fromkeys(parts))
 
 
+def _matches_region(display_name: str, region_name: str) -> bool:
+    normalized_display = display_name.replace("臺", "台")
+    return region_name.replace("臺", "台") in normalized_display
+
+
 def resolve_destination(query: str) -> DestinationResolveResponse:
     normalized = query.strip()
+    location_hint = None
+    try:
+        location_hint = resolve_591_location(normalized)
+    except Rent591Error:
+        pass
+    hinted_region = (
+        _region_name(location_hint["region"])
+        if location_hint
+        else ""
+    )
+    hinted_district = (
+        _district_name(
+            location_hint["region"],
+            location_hint.get("section"),
+        )
+        if location_hint
+        else ""
+    )
+    if not hinted_district and location_hint and location_hint.get("school") == 401:
+        hinted_district = "文山區"
+    geocode_query = (
+        ", ".join(
+            item
+            for item in (
+                normalized,
+                hinted_district,
+                hinted_region,
+                "台灣",
+            )
+            if item
+        )
+        if location_hint
+        else normalized
+    )
     geocode_error: Exception | None = None
     try:
-        point = geocode(normalized)
+        point = geocode(geocode_query)
     except Exception as exc:
         geocode_error = exc
+        point = None
+    if (
+        point
+        and location_hint
+        and not _matches_region(point[2], hinted_region)
+    ):
         point = None
 
     if point:
         latitude, longitude, display_name = point
         resolved_address = display_name
-        try:
-            location = resolve_591_location(display_name)
-        except Rent591Error:
+        if location_hint:
+            location = location_hint
+        else:
             try:
-                reverse_address = reverse_geocode(latitude, longitude)
-            except Exception:
-                reverse_address = None
-            if reverse_address:
-                resolved_address = f"{display_name}, {reverse_address}"
-                location = resolve_591_location(reverse_address)
-            else:
-                location = resolve_591_location(normalized)
+                location = resolve_591_location(display_name)
+            except Rent591Error:
+                try:
+                    reverse_address = reverse_geocode(latitude, longitude)
+                except Exception:
+                    reverse_address = None
+                if reverse_address:
+                    resolved_address = f"{display_name}, {reverse_address}"
+                    location = resolve_591_location(reverse_address)
+                else:
+                    location = resolve_591_location(normalized)
         region_id = location["region"]
         region_name = _region_name(region_id)
         district_name = _district_name(region_id, location.get("section"))
@@ -82,7 +130,7 @@ def resolve_destination(query: str) -> DestinationResolveResponse:
         )
 
     try:
-        location = resolve_591_location(normalized)
+        location = location_hint or resolve_591_location(normalized)
     except Rent591Error as exc:
         if geocode_error:
             raise Rent591Error(

@@ -62,6 +62,18 @@ def test_ambiguous_district_requires_city():
         resolve_591_location("大安區")
 
 
+def test_short_university_alias_does_not_consume_different_landmark():
+    with pytest.raises(Rent591Error):
+        resolve_591_location("台大醫院")
+
+
+def test_short_university_alias_allows_nearby_suffix():
+    assert resolve_591_location("台大附近") == {
+        "region": 1,
+        "section": 5,
+    }
+
+
 def test_parse_591_listing():
     properties = parse_591_listings(LISTING_HTML)
     assert len(properties) == 1

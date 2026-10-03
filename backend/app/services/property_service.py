@@ -1,7 +1,9 @@
 import re
 from concurrent.futures import ThreadPoolExecutor
 
+from app.config import use_mock_listings
 from app.models.schemas import Property, PropertySourceLink, UserRequirements
+from app.services.mock_property_service import load_mock_properties
 from app.services.housefun_service import (
     HousefunError,
     fetch_housefun_properties,
@@ -12,6 +14,39 @@ from app.services.source_planning_service import (
     SourceSearchPlan,
     build_source_search_plan,
 )
+
+
+def _properties_in_planned_area(
+    properties: list[Property],
+    plan: SourceSearchPlan,
+) -> list[Property]:
+    district = plan.district_name.replace("臺", "台").strip()
+    region = plan.region_name.replace("臺", "台").strip()
+    filtered = []
+    for property_ in properties:
+        address = property_.address.replace("臺", "台")
+        if district:
+            if district in address:
+                filtered.append(property_)
+            continue
+        explicit_region = next(
+            (
+                name.replace("臺", "台")
+                for name in (
+                    "台北市", "新北市", "桃園市", "台中市", "台南市",
+                    "高雄市", "基隆市", "新竹市", "新竹縣", "苗栗縣",
+                    "彰化縣", "南投縣", "嘉義市", "嘉義縣", "雲林縣",
+                    "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣",
+                    "金門縣", "連江縣",
+                )
+                if name.replace("臺", "台") in address
+            ),
+            "",
+        )
+        if not explicit_region or explicit_region == region:
+            filtered.append(property_)
+    return filtered
+
 
 def _dedupe_key(property_: Property) -> tuple[int, str]:
     normalized_address = re.sub(
@@ -174,7 +209,10 @@ def _load_multi_source(
         }
         for name, future in futures.items():
             try:
-                results[name] = future.result()
+                results[name] = _properties_in_planned_area(
+                    future.result(),
+                    plan,
+                )
             except (Rent591Error, HousefunError) as exc:
                 errors.append(f"{name}：{exc}")
 
@@ -193,17 +231,29 @@ def load_properties_for_requirements(
     req: UserRequirements,
     plan: SourceSearchPlan | None = None,
 ) -> list[Property]:
+    if use_mock_listings(req.property_source):
+        return load_mock_properties(req)
     if req.property_source == "591":
+        active_plan = plan or build_source_search_plan(req)
         planned_req = req.model_copy(
             update={
                 "destination": (
-                    plan.resolved_address
-                    if plan and plan.resolved_address
+                    active_plan.resolved_address
+                    if active_plan.resolved_address
                     else req.destination
                 )
             }
         )
-        return fetch_591_properties(planned_req)
+        properties = _properties_in_planned_area(
+            fetch_591_properties(planned_req),
+            active_plan,
+        )
+        if not properties:
+            raise Rent591Error(
+                f"租屋來源沒有回傳位於"
+                f"{active_plan.district_name or active_plan.region_name}的房源。"
+            )
+        return properties
     return _load_multi_source(
         req,
         plan or build_source_search_plan(req),
