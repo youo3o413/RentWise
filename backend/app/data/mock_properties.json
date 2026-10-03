@@ -1,8 +1,8 @@
 [
   {
     "id": "mock-ntu-001",
-    "title": "【示範】公館巷內｜貓咪友善明亮套房",
-    "address": "臺北市大安區羅斯福路四段巷內（示範街區，非實際出租地址）",
+    "title": "公館巷內｜貓咪友善明亮套房",
+    "address": "臺北市大安區羅斯福路四段巷內",
     "rent": 13000,
     "management_fee": 0,
     "water_fee": 200,
@@ -14,11 +14,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 7,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 0.5,
     "walking_commute_minutes": 7,
@@ -41,24 +41,24 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-001-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01735,
         "longitude": 121.53265,
         "kind": "store"
       },
       {
         "id": "mock-ntu-001-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0178,
         "longitude": 121.5323,
         "kind": "store"
       },
       {
         "id": "mock-ntu-001-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.01825,
         "longitude": 121.53195,
         "kind": "store"
@@ -71,8 +71,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-001-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.01635,
         "longitude": 121.53345,
         "kind": "parking"
@@ -93,28 +93,28 @@
       "空間只適合一人居住",
       "二樓無電梯"
     ],
-    "description": "【虛構示範房源，非真實出租】8 坪，2 樓。無電梯。窗戶：面向巷內對外窗。可養貓、可養寵物；接受一隻室內貓。可開伙，提供電磁爐及流理台。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】8 坪，2 樓。無電梯。窗戶：面向巷內對外窗。可養貓、可養寵物；接受一隻室內貓。可開伙，提供電磁爐及流理台。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。\n月租 13,000 元；管理費 0 元/月；水費 200 元/月；電費每度 4.5 元；示範月用電估計 180 度。\n地址：臺北市大安區羅斯福路四段巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "8 坪，2 樓。無電梯。窗戶：面向巷內對外窗。可養貓、可養寵物；接受一隻室內貓。可開伙，提供電磁爐及流理台。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。",
+    "listing_text": "8 坪，2 樓。無電梯。窗戶：面向巷內對外窗。可養貓、可養寵物；接受一隻室內貓。可開伙，提供電磁爐及流理台。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。\n月租 13,000 元；管理費 0 元/月；水費 200 元/月；電費每度 4.5 元；月用電估計 180 度。\n地址：臺北市大安區羅斯福路四段巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "採光良好，住宅巷內安靜，氣密窗隔音良好。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/07-basement-room-high-window.jpg",
+    "image_urls": [
+      "/listing-photos/07-basement-room-high-window.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-002",
-    "title": "【示範】公館商圈｜電梯寵物友善小套房",
-    "address": "臺北市中正區羅斯福路四段商圈（示範街區，非實際出租地址）",
+    "title": "公館商圈｜電梯寵物友善小套房",
+    "address": "臺北市中正區羅斯福路四段商圈",
     "rent": 16000,
     "management_fee": 1000,
     "water_fee": 0,
@@ -126,11 +126,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 5,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 0.35,
     "walking_commute_minutes": 5,
@@ -153,32 +153,32 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-002-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01455,
         "longitude": 121.53365,
         "kind": "store"
       },
       {
         "id": "mock-ntu-002-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.015,
         "longitude": 121.5333,
         "kind": "store"
       },
       {
         "id": "mock-ntu-002-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.01545,
         "longitude": 121.53295,
         "kind": "store"
       },
       {
         "id": "mock-ntu-002-store-4",
-        "title": "示範便利商店 4（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 4",
+        "address": "位置供參考",
         "latitude": 25.0159,
         "longitude": 121.5326,
         "kind": "store"
@@ -191,16 +191,16 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-002-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.01355,
         "longitude": 121.53445,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-002-parking-2",
-        "title": "示範停車場 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 2",
+        "address": "位置供參考",
         "latitude": 25.013,
         "longitude": 121.5349,
         "kind": "parking"
@@ -220,28 +220,28 @@
       "室內空間較緊湊",
       "共用洗衣機"
     ],
-    "description": "【虛構示範房源，非真實出租】6 坪，5 樓。有電梯。窗戶：臨街對外窗。可養貓、可養狗，寵物友善；最多一隻寵物。不可開伙，房內無廚房。附單人床、書桌、衣櫃、冷氣與小冰箱，洗衣機共用。採光良好；樓下商圈白天有交談聲，夜間偶有車聲。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】6 坪，5 樓。有電梯。窗戶：臨街對外窗。可養貓、可養狗，寵物友善；最多一隻寵物。不可開伙，房內無廚房。附單人床、書桌、衣櫃、冷氣與小冰箱，洗衣機共用。採光良好；樓下商圈白天有交談聲，夜間偶有車聲。可申請租金補貼，房東配合租補。\n月租 16,000 元；管理費 1,000 元/月；水費 0 元/月；電費每度 5 元；示範月用電估計 160 度。\n地址：臺北市中正區羅斯福路四段商圈（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "6 坪，5 樓。有電梯。窗戶：臨街對外窗。可養貓、可養狗，寵物友善；最多一隻寵物。不可開伙，房內無廚房。附單人床、書桌、衣櫃、冷氣與小冰箱，洗衣機共用。採光良好；樓下商圈白天有交談聲，夜間偶有車聲。可申請租金補貼，房東配合租補。",
+    "listing_text": "6 坪，5 樓。有電梯。窗戶：臨街對外窗。可養貓、可養狗，寵物友善；最多一隻寵物。不可開伙，房內無廚房。附單人床、書桌、衣櫃、冷氣與小冰箱，洗衣機共用。採光良好；樓下商圈白天有交談聲，夜間偶有車聲。可申請租金補貼，房東配合租補。\n月租 16,000 元；管理費 1,000 元/月；水費 0 元/月；電費每度 5 元；月用電估計 160 度。\n地址：臺北市中正區羅斯福路四段商圈。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "採光良好；樓下商圈白天有交談聲，夜間偶有車聲。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/09-l-shaped-study-room.jpg",
+    "image_urls": [
+      "/listing-photos/09-l-shaped-study-room.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-003",
-    "title": "【示範】汀州路｜學生省預算分租套房",
-    "address": "臺北市中正區汀州路三段巷內（示範街區，非實際出租地址）",
+    "title": "汀州路｜學生省預算分租套房",
+    "address": "臺北市中正區汀州路三段巷內",
     "rent": 9500,
     "management_fee": 0,
     "water_fee": 150,
@@ -253,11 +253,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 12,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 0.85,
     "walking_commute_minutes": 12,
@@ -280,16 +280,16 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-003-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01245,
         "longitude": 121.53045,
         "kind": "store"
       },
       {
         "id": "mock-ntu-003-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0129,
         "longitude": 121.5301,
         "kind": "store"
@@ -313,28 +313,28 @@
       "四樓無電梯",
       "電費每度 6.5 元且無對外窗"
     ],
-    "description": "【虛構示範房源，非真實出租】4.5 坪，4 樓。無電梯。窗戶：僅有通向室內走廊的窗，無對外窗。禁止飼養寵物，不可養貓或狗。禁止開伙，不提供廚房。附單人床、簡易衣架、冷氣與書桌，洗衣機共用。隔間較薄，走廊可聽見室友活動聲，隔音差。不配合租金補貼，不可申請租補。",
-    "listing_text": "【虛構示範房源，非真實出租】4.5 坪，4 樓。無電梯。窗戶：僅有通向室內走廊的窗，無對外窗。禁止飼養寵物，不可養貓或狗。禁止開伙，不提供廚房。附單人床、簡易衣架、冷氣與書桌，洗衣機共用。隔間較薄，走廊可聽見室友活動聲，隔音差。不配合租金補貼，不可申請租補。\n月租 9,500 元；管理費 0 元/月；水費 150 元/月；電費每度 6.5 元；示範月用電估計 200 度。\n地址：臺北市中正區汀州路三段巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "4.5 坪，4 樓。無電梯。窗戶：僅有通向室內走廊的窗，無對外窗。禁止飼養寵物，不可養貓或狗。禁止開伙，不提供廚房。附單人床、簡易衣架、冷氣與書桌，洗衣機共用。隔間較薄，走廊可聽見室友活動聲，隔音差。不配合租金補貼，不可申請租補。",
+    "listing_text": "4.5 坪，4 樓。無電梯。窗戶：僅有通向室內走廊的窗，無對外窗。禁止飼養寵物，不可養貓或狗。禁止開伙，不提供廚房。附單人床、簡易衣架、冷氣與書桌，洗衣機共用。隔間較薄，走廊可聽見室友活動聲，隔音差。不配合租金補貼，不可申請租補。\n月租 9,500 元；管理費 0 元/月；水費 150 元/月；電費每度 6.5 元；月用電估計 200 度。\n地址：臺北市中正區汀州路三段巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "隔間較薄，走廊可聽見室友活動聲，隔音差。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/15-shared-apartment-room.jpg",
+    "image_urls": [
+      "/listing-photos/15-shared-apartment-room.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-004",
-    "title": "【示範】溫州街｜靜巷大窗貓宅",
-    "address": "臺北市大安區溫州街住宅巷內（示範街區，非實際出租地址）",
+    "title": "溫州街｜靜巷大窗貓宅",
+    "address": "臺北市大安區溫州街住宅巷內",
     "rent": 18500,
     "management_fee": 0,
     "water_fee": 200,
@@ -346,11 +346,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 14,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.0,
     "walking_commute_minutes": 14,
@@ -373,16 +373,16 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-004-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02195,
         "longitude": 121.53235,
         "kind": "store"
       },
       {
         "id": "mock-ntu-004-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0224,
         "longitude": 121.532,
         "kind": "store"
@@ -395,8 +395,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-004-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02095,
         "longitude": 121.53315,
         "kind": "parking"
@@ -418,28 +418,28 @@
       "三樓無電梯",
       "租金高於入門套房"
     ],
-    "description": "【虛構示範房源，非真實出租】10 坪，3 樓。無電梯。窗戶：雙面對外窗。可養貓，最多兩隻室內貓；犬隻不接受。可開伙，獨立廚房附抽油煙機。附雙人床、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，雙面大窗；巷內安靜，氣密窗隔音佳，室內空間大。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】10 坪，3 樓。無電梯。窗戶：雙面對外窗。可養貓，最多兩隻室內貓；犬隻不接受。可開伙，獨立廚房附抽油煙機。附雙人床、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，雙面大窗；巷內安靜，氣密窗隔音佳，室內空間大。可申請租金補貼，房東配合租補。\n月租 18,500 元；管理費 0 元/月；水費 200 元/月；電費每度 3.2 元；示範月用電估計 220 度。\n地址：臺北市大安區溫州街住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "10 坪，3 樓。無電梯。窗戶：雙面對外窗。可養貓，最多兩隻室內貓；犬隻不接受。可開伙，獨立廚房附抽油煙機。附雙人床、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，雙面大窗；巷內安靜，氣密窗隔音佳，室內空間大。可申請租金補貼，房東配合租補。",
+    "listing_text": "10 坪，3 樓。無電梯。窗戶：雙面對外窗。可養貓，最多兩隻室內貓；犬隻不接受。可開伙，獨立廚房附抽油煙機。附雙人床、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。採光良好，雙面大窗；巷內安靜，氣密窗隔音佳，室內空間大。可申請租金補貼，房東配合租補。\n月租 18,500 元；管理費 0 元/月；水費 200 元/月；電費每度 3.2 元；月用電估計 220 度。\n地址：臺北市大安區溫州街住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "採光良好，雙面大窗；巷內安靜，氣密窗隔音佳，室內空間大。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/11-window-obscured.jpg",
+    "image_urls": [
+      "/listing-photos/11-window-obscured.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-005",
-    "title": "【示範】新生南路｜電梯一房一廳寵物宅",
-    "address": "臺北市大安區新生南路三段周邊（示範街區，非實際出租地址）",
+    "title": "新生南路｜電梯一房一廳寵物宅",
+    "address": "臺北市大安區新生南路三段周邊",
     "rent": 23000,
     "management_fee": 1800,
     "water_fee": 300,
@@ -451,11 +451,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 13,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 0.9,
     "walking_commute_minutes": 13,
@@ -478,24 +478,24 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-005-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02165,
         "longitude": 121.53545,
         "kind": "store"
       },
       {
         "id": "mock-ntu-005-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0221,
         "longitude": 121.5351,
         "kind": "store"
       },
       {
         "id": "mock-ntu-005-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.02255,
         "longitude": 121.53475,
         "kind": "store"
@@ -508,16 +508,16 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-005-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02065,
         "longitude": 121.53625,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-005-parking-2",
-        "title": "示範停車場 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 2",
+        "address": "位置供參考",
         "latitude": 25.0201,
         "longitude": 121.5367,
         "kind": "parking"
@@ -540,28 +540,28 @@
       "管理費另計",
       "總月支出較高"
     ],
-    "description": "【虛構示範房源，非真實出租】13 坪，7 樓。有電梯。窗戶：客廳落地對外窗。可養貓、可養狗、可養寵物，接受一隻貓或中小型犬。可開伙，獨立廚房附電磁爐與抽油煙機。附沙發、雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。一房一廳，空間大且寬敞；採光良好，氣密窗隔音良好，安靜住宅環境。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】13 坪，7 樓。有電梯。窗戶：客廳落地對外窗。可養貓、可養狗、可養寵物，接受一隻貓或中小型犬。可開伙，獨立廚房附電磁爐與抽油煙機。附沙發、雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。一房一廳，空間大且寬敞；採光良好，氣密窗隔音良好，安靜住宅環境。可申請租金補貼，房東配合租補。\n月租 23,000 元；管理費 1,800 元/月；水費 300 元/月；電費每度 3.2 元；示範月用電估計 280 度。\n地址：臺北市大安區新生南路三段周邊（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "13 坪，7 樓。有電梯。窗戶：客廳落地對外窗。可養貓、可養狗、可養寵物，接受一隻貓或中小型犬。可開伙，獨立廚房附電磁爐與抽油煙機。附沙發、雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。一房一廳，空間大且寬敞；採光良好，氣密窗隔音良好，安靜住宅環境。可申請租金補貼，房東配合租補。",
+    "listing_text": "13 坪，7 樓。有電梯。窗戶：客廳落地對外窗。可養貓、可養狗、可養寵物，接受一隻貓或中小型犬。可開伙，獨立廚房附電磁爐與抽油煙機。附沙發、雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。一房一廳，空間大且寬敞；採光良好，氣密窗隔音良好，安靜住宅環境。可申請租金補貼，房東配合租補。\n月租 23,000 元；管理費 1,800 元/月；水費 300 元/月；電費每度 3.2 元；月用電估計 280 度。\n地址：臺北市大安區新生南路三段周邊。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "一房一廳，空間大且寬敞；採光良好，氣密窗隔音良好，安靜住宅環境。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/08-minimal-double-bed.jpg",
+    "image_urls": [
+      "/listing-photos/08-minimal-double-bed.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-006",
-    "title": "【示範】辛亥路｜高樓層採光套房",
-    "address": "臺北市大安區辛亥路二段巷內（示範街區，非實際出租地址）",
+    "title": "辛亥路｜高樓層採光套房",
+    "address": "臺北市大安區辛亥路二段巷內",
     "rent": 17000,
     "management_fee": 0,
     "water_fee": 200,
@@ -573,11 +573,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 19,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.35,
     "walking_commute_minutes": 19,
@@ -600,8 +600,8 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-006-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02345,
         "longitude": 121.53865,
         "kind": "store"
@@ -614,8 +614,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-006-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02245,
         "longitude": 121.53945,
         "kind": "parking"
@@ -634,28 +634,28 @@
       "六樓無電梯",
       "寵物政策及租補尚待確認"
     ],
-    "description": "【虛構示範房源，非真實出租】9 坪，6 樓。無電梯。窗戶：寬幅對外窗。寵物需先與房東協商，僅考慮一隻已結紮成貓；是否同意及清潔費待確認。僅限電磁爐簡易料理，不可明火開伙。附雙人床、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，大窗明亮；高樓層仍可聽到幹道車聲。是否配合租金補貼待確認。",
-    "listing_text": "【虛構示範房源，非真實出租】9 坪，6 樓。無電梯。窗戶：寬幅對外窗。寵物需先與房東協商，僅考慮一隻已結紮成貓；是否同意及清潔費待確認。僅限電磁爐簡易料理，不可明火開伙。附雙人床、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，大窗明亮；高樓層仍可聽到幹道車聲。是否配合租金補貼待確認。\n月租 17,000 元；管理費 0 元/月；水費 200 元/月；電費每度 5 元；示範月用電估計 220 度。\n地址：臺北市大安區辛亥路二段巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "9 坪，6 樓。無電梯。窗戶：寬幅對外窗。寵物需先與房東協商，僅考慮一隻已結紮成貓；是否同意及清潔費待確認。僅限電磁爐簡易料理，不可明火開伙。附雙人床、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，大窗明亮；高樓層仍可聽到幹道車聲。是否配合租金補貼待確認。",
+    "listing_text": "9 坪，6 樓。無電梯。窗戶：寬幅對外窗。寵物需先與房東協商，僅考慮一隻已結紮成貓；是否同意及清潔費待確認。僅限電磁爐簡易料理，不可明火開伙。附雙人床、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，大窗明亮；高樓層仍可聽到幹道車聲。是否配合租金補貼待確認。\n月租 17,000 元；管理費 0 元/月；水費 200 元/月；電費每度 5 元；月用電估計 220 度。\n地址：臺北市大安區辛亥路二段巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "採光良好，大窗明亮；高樓層仍可聽到幹道車聲。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/04-large-room-two-beds.jpg",
+    "image_urls": [
+      "/listing-photos/04-large-room-two-beds.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-007",
-    "title": "【示範】長興街｜近校園一樓經濟套房",
-    "address": "臺北市大安區長興街周邊（示範街區，非實際出租地址）",
+    "title": "長興街｜近校園一樓經濟套房",
+    "address": "臺北市大安區長興街周邊",
     "rent": 11500,
     "management_fee": 300,
     "water_fee": 200,
@@ -667,11 +667,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 22,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.55,
     "walking_commute_minutes": 22,
@@ -694,8 +694,8 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-007-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01545,
         "longitude": 121.54365,
         "kind": "store"
@@ -719,28 +719,28 @@
       "沒有對外窗",
       "一樓車輛噪音明顯"
     ],
-    "description": "【虛構示範房源，非真實出租】5.5 坪，1 樓。無電梯。窗戶：浴室排氣孔，無對外窗。不可寵物，禁止飼養貓狗。不可開伙，無廚房設備。附單人床、衣櫃、書桌、冷氣與小冰箱。一樓臨巷口，早晨機車聲與出入聲較多；房內採機械通風。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】5.5 坪，1 樓。無電梯。窗戶：浴室排氣孔，無對外窗。不可寵物，禁止飼養貓狗。不可開伙，無廚房設備。附單人床、衣櫃、書桌、冷氣與小冰箱。一樓臨巷口，早晨機車聲與出入聲較多；房內採機械通風。可申請租金補貼，房東配合租補。\n月租 11,500 元；管理費 300 元/月；水費 200 元/月；電費每度 5.5 元；示範月用電估計 190 度。\n地址：臺北市大安區長興街周邊（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "5.5 坪，1 樓。無電梯。窗戶：浴室排氣孔，無對外窗。不可寵物，禁止飼養貓狗。不可開伙，無廚房設備。附單人床、衣櫃、書桌、冷氣與小冰箱。一樓臨巷口，早晨機車聲與出入聲較多；房內採機械通風。可申請租金補貼，房東配合租補。",
+    "listing_text": "5.5 坪，1 樓。無電梯。窗戶：浴室排氣孔，無對外窗。不可寵物，禁止飼養貓狗。不可開伙，無廚房設備。附單人床、衣櫃、書桌、冷氣與小冰箱。一樓臨巷口，早晨機車聲與出入聲較多；房內採機械通風。可申請租金補貼，房東配合租補。\n月租 11,500 元；管理費 300 元/月；水費 200 元/月；電費每度 5.5 元；月用電估計 190 度。\n地址：臺北市大安區長興街周邊。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "一樓臨巷口，早晨機車聲與出入聲較多；房內採機械通風。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/17-long-narrow-room.jpg",
+    "image_urls": [
+      "/listing-photos/17-long-narrow-room.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-008",
-    "title": "【示範】基隆路｜合租雅房附共用廚房",
-    "address": "臺北市大安區基隆路三段住宅巷內（示範街區，非實際出租地址）",
+    "title": "基隆路｜合租雅房附共用廚房",
+    "address": "臺北市大安區基隆路三段住宅巷內",
     "rent": 8500,
     "management_fee": 0,
     "water_fee": 100,
@@ -752,11 +752,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 28,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 2.0,
     "walking_commute_minutes": 28,
@@ -779,16 +779,16 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-008-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01765,
         "longitude": 121.54765,
         "kind": "store"
       },
       {
         "id": "mock-ntu-008-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0181,
         "longitude": 121.5473,
         "kind": "store"
@@ -801,8 +801,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-008-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.01665,
         "longitude": 121.54845,
         "kind": "parking"
@@ -822,28 +822,28 @@
       "浴室與廚房共用",
       "租補是否配合待確認"
     ],
-    "description": "【虛構示範房源，非真實出租】4 坪，3 樓。無電梯。窗戶：房間小型對外窗。謝絕寵物，不可養貓或狗。可開伙，與另外兩名室友共用廚房、冰箱及浴室。房內附單人床、書桌、衣櫃與冷氣，洗衣機共用。合租雅房，有室友生活聲；公共區域輪流打掃。是否配合租金補貼待確認。",
-    "listing_text": "【虛構示範房源，非真實出租】4 坪，3 樓。無電梯。窗戶：房間小型對外窗。謝絕寵物，不可養貓或狗。可開伙，與另外兩名室友共用廚房、冰箱及浴室。房內附單人床、書桌、衣櫃與冷氣，洗衣機共用。合租雅房，有室友生活聲；公共區域輪流打掃。是否配合租金補貼待確認。\n月租 8,500 元；管理費 0 元/月；水費 100 元/月；電費每度 3 元；示範月用電估計 130 度。\n地址：臺北市大安區基隆路三段住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "4 坪，3 樓。無電梯。窗戶：房間小型對外窗。謝絕寵物，不可養貓或狗。可開伙，與另外兩名室友共用廚房、冰箱及浴室。房內附單人床、書桌、衣櫃與冷氣，洗衣機共用。合租雅房，有室友生活聲；公共區域輪流打掃。是否配合租金補貼待確認。",
+    "listing_text": "4 坪，3 樓。無電梯。窗戶：房間小型對外窗。謝絕寵物，不可養貓或狗。可開伙，與另外兩名室友共用廚房、冰箱及浴室。房內附單人床、書桌、衣櫃與冷氣，洗衣機共用。合租雅房，有室友生活聲；公共區域輪流打掃。是否配合租金補貼待確認。\n月租 8,500 元；管理費 0 元/月；水費 100 元/月；電費每度 3 元；月用電估計 130 度。\n地址：臺北市大安區基隆路三段住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "合租雅房，有室友生活聲；公共區域輪流打掃。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/02-no-window-small-room.jpg",
+    "image_urls": [
+      "/listing-photos/02-no-window-small-room.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-009",
-    "title": "【示範】和平東路｜大窗電梯寵物套房",
-    "address": "臺北市大安區和平東路二段沿線（示範街區，非實際出租地址）",
+    "title": "和平東路｜大窗電梯寵物套房",
+    "address": "臺北市大安區和平東路二段沿線",
     "rent": 21000,
     "management_fee": 1500,
     "water_fee": 250,
@@ -855,11 +855,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 24,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.7,
     "walking_commute_minutes": 24,
@@ -882,32 +882,32 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-009-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02605,
         "longitude": 121.53665,
         "kind": "store"
       },
       {
         "id": "mock-ntu-009-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0265,
         "longitude": 121.5363,
         "kind": "store"
       },
       {
         "id": "mock-ntu-009-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.02695,
         "longitude": 121.53595,
         "kind": "store"
       },
       {
         "id": "mock-ntu-009-store-4",
-        "title": "示範便利商店 4（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 4",
+        "address": "位置供參考",
         "latitude": 25.0274,
         "longitude": 121.5356,
         "kind": "store"
@@ -920,24 +920,24 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-009-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02505,
         "longitude": 121.53745,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-009-parking-2",
-        "title": "示範停車場 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 2",
+        "address": "位置供參考",
         "latitude": 25.0245,
         "longitude": 121.5379,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-009-parking-3",
-        "title": "示範停車場 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 3",
+        "address": "位置供參考",
         "latitude": 25.02395,
         "longitude": 121.53835,
         "kind": "parking"
@@ -958,28 +958,28 @@
       "臨幹道環境較吵",
       "不配合租金補貼"
     ],
-    "description": "【虛構示範房源，非真實出租】11 坪，8 樓。有電梯。窗戶：臨大馬路對外窗。可養貓、可養狗，寵物友善。可開伙，附開放式廚房與抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱及獨立洗衣機。空間大、採光良好；面向幹道，尖峰車流聲明顯，隔音不好。不配合租金補貼，不可申請租補。",
-    "listing_text": "【虛構示範房源，非真實出租】11 坪，8 樓。有電梯。窗戶：臨大馬路對外窗。可養貓、可養狗，寵物友善。可開伙，附開放式廚房與抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱及獨立洗衣機。空間大、採光良好；面向幹道，尖峰車流聲明顯，隔音不好。不配合租金補貼，不可申請租補。\n月租 21,000 元；管理費 1,500 元/月；水費 250 元/月；電費每度 4 元；示範月用電估計 240 度。\n地址：臺北市大安區和平東路二段沿線（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "11 坪，8 樓。有電梯。窗戶：臨大馬路對外窗。可養貓、可養狗，寵物友善。可開伙，附開放式廚房與抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱及獨立洗衣機。空間大、採光良好；面向幹道，尖峰車流聲明顯，隔音不好。不配合租金補貼，不可申請租補。",
+    "listing_text": "11 坪，8 樓。有電梯。窗戶：臨大馬路對外窗。可養貓、可養狗，寵物友善。可開伙，附開放式廚房與抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱及獨立洗衣機。空間大、採光良好；面向幹道，尖峰車流聲明顯，隔音不好。不配合租金補貼，不可申請租補。\n月租 21,000 元；管理費 1,500 元/月；水費 250 元/月；電費每度 4 元；月用電估計 240 度。\n地址：臺北市大安區和平東路二段沿線。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "空間大、採光良好；面向幹道，尖峰車流聲明顯，隔音不好。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/03-window-ac-unit.jpg",
+    "image_urls": [
+      "/listing-photos/03-window-ac-unit.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-010",
-    "title": "【示範】青田街｜安靜寬敞兩房公寓",
-    "address": "臺北市大安區青田街住宅巷內（示範街區，非實際出租地址）",
+    "title": "青田街｜安靜寬敞兩房公寓",
+    "address": "臺北市大安區青田街住宅巷內",
     "rent": 26000,
     "management_fee": 0,
     "water_fee": 300,
@@ -991,11 +991,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 25,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.8,
     "walking_commute_minutes": 25,
@@ -1018,16 +1018,16 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-010-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02765,
         "longitude": 121.53265,
         "kind": "store"
       },
       {
         "id": "mock-ntu-010-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0281,
         "longitude": 121.5323,
         "kind": "store"
@@ -1040,8 +1040,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-010-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02665,
         "longitude": 121.53345,
         "kind": "parking"
@@ -1063,28 +1063,28 @@
       "部分家具需自備",
       "兩房總租金較高"
     ],
-    "description": "【虛構示範房源，非真實出租】18 坪，2 樓。無電梯。窗戶：客廳及兩房皆有對外窗。禁止寵物，不得飼養貓狗。可開伙，獨立廚房可使用瓦斯爐。附冷氣、冰箱、洗衣機與衣櫃；不附床墊、書桌及沙發。兩房一廳，空間大、坪數大且寬敞；採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】18 坪，2 樓。無電梯。窗戶：客廳及兩房皆有對外窗。禁止寵物，不得飼養貓狗。可開伙，獨立廚房可使用瓦斯爐。附冷氣、冰箱、洗衣機與衣櫃；不附床墊、書桌及沙發。兩房一廳，空間大、坪數大且寬敞；採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。\n月租 26,000 元；管理費 0 元/月；水費 300 元/月；電費每度 3.2 元；示範月用電估計 320 度。\n地址：臺北市大安區青田街住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "18 坪，2 樓。無電梯。窗戶：客廳及兩房皆有對外窗。禁止寵物，不得飼養貓狗。可開伙，獨立廚房可使用瓦斯爐。附冷氣、冰箱、洗衣機與衣櫃；不附床墊、書桌及沙發。兩房一廳，空間大、坪數大且寬敞；採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。",
+    "listing_text": "18 坪，2 樓。無電梯。窗戶：客廳及兩房皆有對外窗。禁止寵物，不得飼養貓狗。可開伙，獨立廚房可使用瓦斯爐。附冷氣、冰箱、洗衣機與衣櫃；不附床墊、書桌及沙發。兩房一廳，空間大、坪數大且寬敞；採光良好，住宅巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。\n月租 26,000 元；管理費 0 元/月；水費 300 元/月；電費每度 3.2 元；月用電估計 320 度。\n地址：臺北市大安區青田街住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "兩房一廳，空間大、坪數大且寬敞；採光良好，住宅巷內安靜，氣密窗隔音良好。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/05-attic-sloped-ceiling.jpg",
+    "image_urls": [
+      "/listing-photos/05-attic-sloped-ceiling.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-011",
-    "title": "【示範】師大商圈｜生活機能套房",
-    "address": "臺北市大安區師大路商圈巷內（示範街區，非實際出租地址）",
+    "title": "師大商圈｜生活機能套房",
+    "address": "臺北市大安區師大路商圈巷內",
     "rent": 14500,
     "management_fee": 500,
     "water_fee": 150,
@@ -1096,11 +1096,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 22,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.55,
     "walking_commute_minutes": 22,
@@ -1123,32 +1123,32 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-011-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02405,
         "longitude": 121.52845,
         "kind": "store"
       },
       {
         "id": "mock-ntu-011-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0245,
         "longitude": 121.5281,
         "kind": "store"
       },
       {
         "id": "mock-ntu-011-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.02495,
         "longitude": 121.52775,
         "kind": "store"
       },
       {
         "id": "mock-ntu-011-store-4",
-        "title": "示範便利商店 4（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 4",
+        "address": "位置供參考",
         "latitude": 25.0254,
         "longitude": 121.5274,
         "kind": "store"
@@ -1172,28 +1172,28 @@
       "夜間人潮與店家聲音",
       "寵物與租補政策未揭露"
     ],
-    "description": "【虛構示範房源，非真實出租】7 坪，2 樓。無電梯。窗戶：面向商店巷道對外窗。寵物政策未提供，請先確認。可開伙，流理台旁可放置自備電磁爐。附雙人床、衣櫃、書桌、冷氣與冰箱，洗衣機共用。商圈生活方便；晚間店家營業及人潮交談聲明顯。是否配合租金補貼待確認。",
-    "listing_text": "【虛構示範房源，非真實出租】7 坪，2 樓。無電梯。窗戶：面向商店巷道對外窗。寵物政策未提供，請先確認。可開伙，流理台旁可放置自備電磁爐。附雙人床、衣櫃、書桌、冷氣與冰箱，洗衣機共用。商圈生活方便；晚間店家營業及人潮交談聲明顯。是否配合租金補貼待確認。\n月租 14,500 元；管理費 500 元/月；水費 150 元/月；電費每度 5.5 元；示範月用電估計 200 度。\n地址：臺北市大安區師大路商圈巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "7 坪，2 樓。無電梯。窗戶：面向商店巷道對外窗。寵物政策未提供，請先確認。可開伙，流理台旁可放置自備電磁爐。附雙人床、衣櫃、書桌、冷氣與冰箱，洗衣機共用。商圈生活方便；晚間店家營業及人潮交談聲明顯。是否配合租金補貼待確認。",
+    "listing_text": "7 坪，2 樓。無電梯。窗戶：面向商店巷道對外窗。寵物政策未提供，請先確認。可開伙，流理台旁可放置自備電磁爐。附雙人床、衣櫃、書桌、冷氣與冰箱，洗衣機共用。商圈生活方便；晚間店家營業及人潮交談聲明顯。是否配合租金補貼待確認。\n月租 14,500 元；管理費 500 元/月；水費 150 元/月；電費每度 5.5 元；月用電估計 200 度。\n地址：臺北市大安區師大路商圈巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "商圈生活方便；晚間店家營業及人潮交談聲明顯。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/12-room-no-exterior-view.jpg",
+    "image_urls": [
+      "/listing-photos/12-room-no-exterior-view.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-012",
-    "title": "【示範】永和福和路｜寬敞貓友善公寓",
-    "address": "新北市永和區福和路近福和橋周邊（示範街區，非實際出租地址）",
+    "title": "永和福和路｜寬敞貓友善公寓",
+    "address": "新北市永和區福和路近福和橋周邊",
     "rent": 16000,
     "management_fee": 0,
     "water_fee": 250,
@@ -1205,11 +1205,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 33,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 2.35,
     "walking_commute_minutes": 33,
@@ -1232,24 +1232,24 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-012-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.00875,
         "longitude": 121.52295,
         "kind": "store"
       },
       {
         "id": "mock-ntu-012-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0092,
         "longitude": 121.5226,
         "kind": "store"
       },
       {
         "id": "mock-ntu-012-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.00965,
         "longitude": 121.52225,
         "kind": "store"
@@ -1262,16 +1262,16 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-012-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.00775,
         "longitude": 121.52375,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-012-parking-2",
-        "title": "示範停車場 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 2",
+        "address": "位置供參考",
         "latitude": 25.0072,
         "longitude": 121.5242,
         "kind": "parking"
@@ -1292,28 +1292,28 @@
       "五樓無電梯",
       "步行需過橋，距離較遠"
     ],
-    "description": "【虛構示範房源，非真實出租】12 坪，5 樓。無電梯。窗戶：客廳及房間對外窗。可養貓，接受一至兩隻室內貓；犬隻不接受。可開伙，獨立廚房附瓦斯爐與抽油煙機。附床架、衣櫃、冷氣與冰箱；書桌及洗衣機需自備。一房一廳，空間大且採光良好；福和橋周邊尖峰時段有車流聲。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】12 坪，5 樓。無電梯。窗戶：客廳及房間對外窗。可養貓，接受一至兩隻室內貓；犬隻不接受。可開伙，獨立廚房附瓦斯爐與抽油煙機。附床架、衣櫃、冷氣與冰箱；書桌及洗衣機需自備。一房一廳，空間大且採光良好；福和橋周邊尖峰時段有車流聲。可申請租金補貼，房東配合租補。\n月租 16,000 元；管理費 0 元/月；水費 250 元/月；電費每度 3.2 元；示範月用電估計 230 度。\n地址：新北市永和區福和路近福和橋周邊（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "12 坪，5 樓。無電梯。窗戶：客廳及房間對外窗。可養貓，接受一至兩隻室內貓；犬隻不接受。可開伙，獨立廚房附瓦斯爐與抽油煙機。附床架、衣櫃、冷氣與冰箱；書桌及洗衣機需自備。一房一廳，空間大且採光良好；福和橋周邊尖峰時段有車流聲。可申請租金補貼，房東配合租補。",
+    "listing_text": "12 坪，5 樓。無電梯。窗戶：客廳及房間對外窗。可養貓，接受一至兩隻室內貓；犬隻不接受。可開伙，獨立廚房附瓦斯爐與抽油煙機。附床架、衣櫃、冷氣與冰箱；書桌及洗衣機需自備。一房一廳，空間大且採光良好；福和橋周邊尖峰時段有車流聲。可申請租金補貼，房東配合租補。\n月租 16,000 元；管理費 0 元/月；水費 250 元/月；電費每度 3.2 元；月用電估計 230 度。\n地址：新北市永和區福和路近福和橋周邊。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "一房一廳，空間大且採光良好；福和橋周邊尖峰時段有車流聲。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/01-bright-studio-window.jpg",
+    "image_urls": [
+      "/listing-photos/01-bright-studio-window.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-013",
-    "title": "【示範】水源路｜靜巷小資獨立套房",
-    "address": "臺北市中正區水源路住宅巷內（示範街區，非實際出租地址）",
+    "title": "水源路｜靜巷小資獨立套房",
+    "address": "臺北市中正區水源路住宅巷內",
     "rent": 12500,
     "management_fee": 0,
     "water_fee": 0,
@@ -1325,11 +1325,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 15,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.05,
     "walking_commute_minutes": 15,
@@ -1352,16 +1352,16 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-013-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01125,
         "longitude": 121.53135,
         "kind": "store"
       },
       {
         "id": "mock-ntu-013-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0117,
         "longitude": 121.531,
         "kind": "store"
@@ -1374,8 +1374,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-013-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.01025,
         "longitude": 121.53215,
         "kind": "parking"
@@ -1395,28 +1395,28 @@
       "寵物需個別協商",
       "料理方式受限制"
     ],
-    "description": "【虛構示範房源，非真實出租】6.5 坪，3 樓。無電梯。窗戶：面住宅中庭對外窗。寵物需事先取得書面同意；限一隻室內貓，清潔費及是否接受仍待協商。可開伙，但僅限電磁爐；不可明火，沒有抽油煙機。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。巷內安靜，氣密窗隔音佳；窗戶面向中庭，採光普通。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】6.5 坪，3 樓。無電梯。窗戶：面住宅中庭對外窗。寵物需事先取得書面同意；限一隻室內貓，清潔費及是否接受仍待協商。可開伙，但僅限電磁爐；不可明火，沒有抽油煙機。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。巷內安靜，氣密窗隔音佳；窗戶面向中庭，採光普通。可申請租金補貼，房東配合租補。\n月租 12,500 元；管理費 0 元/月；水費 0 元/月；電費每度 4.8 元；示範月用電估計 180 度。\n地址：臺北市中正區水源路住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "6.5 坪，3 樓。無電梯。窗戶：面住宅中庭對外窗。寵物需事先取得書面同意；限一隻室內貓，清潔費及是否接受仍待協商。可開伙，但僅限電磁爐；不可明火，沒有抽油煙機。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。巷內安靜，氣密窗隔音佳；窗戶面向中庭，採光普通。可申請租金補貼，房東配合租補。",
+    "listing_text": "6.5 坪，3 樓。無電梯。窗戶：面住宅中庭對外窗。寵物需事先取得書面同意；限一隻室內貓，清潔費及是否接受仍待協商。可開伙，但僅限電磁爐；不可明火，沒有抽油煙機。附床架、床墊、衣櫃、書桌、冷氣、冰箱與獨立洗衣機。巷內安靜，氣密窗隔音佳；窗戶面向中庭，採光普通。可申請租金補貼，房東配合租補。\n月租 12,500 元；管理費 0 元/月；水費 0 元/月；電費每度 4.8 元；月用電估計 180 度。\n地址：臺北市中正區水源路住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "巷內安靜，氣密窗隔音佳；窗戶面向中庭，採光普通。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/14-window-ac-curtain.jpg",
+    "image_urls": [
+      "/listing-photos/14-window-ac-curtain.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-014",
-    "title": "【示範】台電大樓周邊｜電梯家具齊全套房",
-    "address": "臺北市中正區羅斯福路三段周邊（示範街區，非實際出租地址）",
+    "title": "台電大樓周邊｜電梯家具齊全套房",
+    "address": "臺北市中正區羅斯福路三段周邊",
     "rent": 19500,
     "management_fee": 1200,
     "water_fee": 200,
@@ -1428,11 +1428,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 19,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.35,
     "walking_commute_minutes": 19,
@@ -1455,24 +1455,24 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-014-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02135,
         "longitude": 121.52785,
         "kind": "store"
       },
       {
         "id": "mock-ntu-014-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0218,
         "longitude": 121.5275,
         "kind": "store"
       },
       {
         "id": "mock-ntu-014-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.02225,
         "longitude": 121.52715,
         "kind": "store"
@@ -1485,16 +1485,16 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-014-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02035,
         "longitude": 121.52865,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-014-parking-2",
-        "title": "示範停車場 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 2",
+        "address": "位置供參考",
         "latitude": 25.0198,
         "longitude": 121.5291,
         "kind": "parking"
@@ -1514,28 +1514,28 @@
       "另收管理費",
       "無法自行開伙"
     ],
-    "description": "【虛構示範房源，非真實出租】9.5 坪，9 樓。有電梯。窗戶：高樓層對外窗。不可養寵物，謝絕貓狗。不可開伙，僅提供微波爐加熱熟食。附雙人床、沙發、書桌、衣櫃、冷氣、冰箱與獨立洗脫烘衣機。採光良好；高樓仍有一般道路背景音，門禁管理。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】9.5 坪，9 樓。有電梯。窗戶：高樓層對外窗。不可養寵物，謝絕貓狗。不可開伙，僅提供微波爐加熱熟食。附雙人床、沙發、書桌、衣櫃、冷氣、冰箱與獨立洗脫烘衣機。採光良好；高樓仍有一般道路背景音，門禁管理。可申請租金補貼，房東配合租補。\n月租 19,500 元；管理費 1,200 元/月；水費 200 元/月；電費每度 4 元；示範月用電估計 210 度。\n地址：臺北市中正區羅斯福路三段周邊（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "9.5 坪，9 樓。有電梯。窗戶：高樓層對外窗。不可養寵物，謝絕貓狗。不可開伙，僅提供微波爐加熱熟食。附雙人床、沙發、書桌、衣櫃、冷氣、冰箱與獨立洗脫烘衣機。採光良好；高樓仍有一般道路背景音，門禁管理。可申請租金補貼，房東配合租補。",
+    "listing_text": "9.5 坪，9 樓。有電梯。窗戶：高樓層對外窗。不可養寵物，謝絕貓狗。不可開伙，僅提供微波爐加熱熟食。附雙人床、沙發、書桌、衣櫃、冷氣、冰箱與獨立洗脫烘衣機。採光良好；高樓仍有一般道路背景音，門禁管理。可申請租金補貼，房東配合租補。\n月租 19,500 元；管理費 1,200 元/月；水費 200 元/月；電費每度 4 元；月用電估計 210 度。\n地址：臺北市中正區羅斯福路三段周邊。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "採光良好；高樓仍有一般道路背景音，門禁管理。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/13-large-corner-windows.jpg",
+    "image_urls": [
+      "/listing-photos/13-large-corner-windows.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-015",
-    "title": "【示範】萬隆住宅區｜安靜電梯貓友善套房",
-    "address": "臺北市文山區羅斯福路五段住宅巷內（示範街區，非實際出租地址）",
+    "title": "萬隆住宅區｜安靜電梯貓友善套房",
+    "address": "臺北市文山區羅斯福路五段住宅巷內",
     "rent": 17800,
     "management_fee": 1000,
     "water_fee": 200,
@@ -1547,11 +1547,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 32,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 2.25,
     "walking_commute_minutes": 32,
@@ -1574,16 +1574,16 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-015-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.00345,
         "longitude": 121.53785,
         "kind": "store"
       },
       {
         "id": "mock-ntu-015-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0039,
         "longitude": 121.5375,
         "kind": "store"
@@ -1596,16 +1596,16 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-015-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.00245,
         "longitude": 121.53865,
         "kind": "parking"
       },
       {
         "id": "mock-ntu-015-parking-2",
-        "title": "示範停車場 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 2",
+        "address": "位置供參考",
         "latitude": 25.0019,
         "longitude": 121.5391,
         "kind": "parking"
@@ -1626,28 +1626,28 @@
       "步行到校距離較遠",
       "管理費另計"
     ],
-    "description": "【虛構示範房源，非真實出租】10 坪，4 樓。有電梯。窗戶：面巷內對外窗。可養貓，限兩隻以內室內貓；不接受犬隻。可開伙，附電磁爐、流理台及抽油煙機。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】10 坪，4 樓。有電梯。窗戶：面巷內對外窗。可養貓，限兩隻以內室內貓；不接受犬隻。可開伙，附電磁爐、流理台及抽油煙機。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。\n月租 17,800 元；管理費 1,000 元/月；水費 200 元/月；電費每度 3.2 元；示範月用電估計 220 度。\n地址：臺北市文山區羅斯福路五段住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "10 坪，4 樓。有電梯。窗戶：面巷內對外窗。可養貓，限兩隻以內室內貓；不接受犬隻。可開伙，附電磁爐、流理台及抽油煙機。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。",
+    "listing_text": "10 坪，4 樓。有電梯。窗戶：面巷內對外窗。可養貓，限兩隻以內室內貓；不接受犬隻。可開伙，附電磁爐、流理台及抽油煙機。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。採光良好，巷內安靜，氣密窗隔音良好。可申請租金補貼，房東配合租補。\n月租 17,800 元；管理費 1,000 元/月；水費 200 元/月；電費每度 3.2 元；月用電估計 220 度。\n地址：臺北市文山區羅斯福路五段住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "採光良好，巷內安靜，氣密窗隔音良好。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/06-balcony-window.jpg",
+    "image_urls": [
+      "/listing-photos/06-balcony-window.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-016",
-    "title": "【示範】泰順街｜條件待補充小套房",
-    "address": "臺北市大安區泰順街住宅巷內（示範街區，非實際出租地址）",
+    "title": "泰順街｜條件待補充小套房",
+    "address": "臺北市大安區泰順街住宅巷內",
     "rent": 13800,
     "management_fee": 300,
     "water_fee": 200,
@@ -1659,11 +1659,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 19,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 1.35,
     "walking_commute_minutes": 19,
@@ -1700,29 +1700,28 @@
       "窗戶與安靜程度未知",
       "管理費、水費、電價及周邊設施待確認"
     ],
-    "description": "【虛構示範房源，非真實出租】7.5 坪，1 樓。電梯資訊未揭露。窗戶：窗戶型式未揭露。寵物政策尚未提供。是否能料理及相關設備尚未提供。僅註明附冷氣，其他家具設備待確認。一樓套房；窗戶、噪音與租補資訊皆待補充。管理費、水費及電價尚未揭露，展示金額為估算。是否配合租金補貼待確認。",
-    "listing_text": "【虛構示範房源，非真實出租】7.5 坪，1 樓。電梯資訊未揭露。窗戶：窗戶型式未揭露。寵物政策尚未提供。是否能料理及相關設備尚未提供。僅註明附冷氣，其他家具設備待確認。一樓套房；窗戶、噪音與租補資訊皆待補充。管理費、水費及電價尚未揭露，展示金額為估算。是否配合租金補貼待確認。\n月租 13,800 元；管理費、水費、電價未揭露，模型欄位保留示範估算值，實際費用待確認。\n地址：臺北市大安區泰順街住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "7.5 坪，1 樓。電梯資訊未揭露。窗戶：窗戶型式未揭露。寵物政策尚未提供。是否能料理及相關設備尚未提供。僅註明附冷氣，其他家具設備待確認。一樓套房；窗戶、噪音與租補資訊皆待補充。管理費、水費及電價尚未揭露，展示金額為估算。是否配合租金補貼待確認。",
+    "listing_text": "7.5 坪，1 樓。電梯資訊未揭露。窗戶：窗戶型式未揭露。寵物政策尚未提供。是否能料理及相關設備尚未提供。僅註明附冷氣，其他家具設備待確認。一樓套房；窗戶、噪音與租補資訊皆待補充。管理費、水費及電價尚未揭露，展示金額為估算。是否配合租金補貼待確認。\n月租 13,800 元；管理費、水費、電價未揭露，目前使用估算值，實際費用待確認。\n地址：臺北市大安區泰順街住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/18-corner-room-obstructed.jpg",
+    "image_urls": [
+      "/listing-photos/18-corner-room-obstructed.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。",
-      "管理費 300 元、水費 200 元、電價 5 元為演示估算；刊登未揭露，不能視為已確認。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-017",
-    "title": "【示範】富陽街｜安靜寵物友善公寓套房",
-    "address": "臺北市大安區富陽街住宅巷內（示範街區，非實際出租地址）",
+    "title": "富陽街｜安靜寵物友善公寓套房",
+    "address": "臺北市大安區富陽街住宅巷內",
     "rent": 15500,
     "management_fee": 0,
     "water_fee": 200,
@@ -1734,11 +1733,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 37,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 2.6,
     "walking_commute_minutes": 37,
@@ -1761,8 +1760,8 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-017-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.01965,
         "longitude": 121.55475,
         "kind": "store"
@@ -1787,28 +1786,28 @@
       "五樓無電梯",
       "步行到校時間較長"
     ],
-    "description": "【虛構示範房源，非真實出租】8 坪，5 樓。無電梯。窗戶：房間對外窗。可養貓、可養狗、可養寵物，寵物友善。可開伙，附簡易廚房及電磁爐。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。住宅巷內安靜，隔音良好，採光良好。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】8 坪，5 樓。無電梯。窗戶：房間對外窗。可養貓、可養狗、可養寵物，寵物友善。可開伙，附簡易廚房及電磁爐。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。住宅巷內安靜，隔音良好，採光良好。可申請租金補貼，房東配合租補。\n月租 15,500 元；管理費 0 元/月；水費 200 元/月；電費每度 4.5 元；示範月用電估計 200 度。\n地址：臺北市大安區富陽街住宅巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "8 坪，5 樓。無電梯。窗戶：房間對外窗。可養貓、可養狗、可養寵物，寵物友善。可開伙，附簡易廚房及電磁爐。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。住宅巷內安靜，隔音良好，採光良好。可申請租金補貼，房東配合租補。",
+    "listing_text": "8 坪，5 樓。無電梯。窗戶：房間對外窗。可養貓、可養狗、可養寵物，寵物友善。可開伙，附簡易廚房及電磁爐。附雙人床、書桌、衣櫃、冷氣、冰箱與獨立洗衣機。住宅巷內安靜，隔音良好，採光良好。可申請租金補貼，房東配合租補。\n月租 15,500 元；管理費 0 元/月；水費 200 元/月；電費每度 4.5 元；月用電估計 200 度。\n地址：臺北市大安區富陽街住宅巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "住宅巷內安靜，隔音良好，採光良好。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/16-renovated-warm-bedroom.jpg",
+    "image_urls": [
+      "/listing-photos/16-renovated-warm-bedroom.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   },
   {
     "id": "mock-ntu-018",
-    "title": "【示範】和平東路後巷｜電梯一房附陽台",
-    "address": "臺北市大安區和平東路三段巷內（示範街區，非實際出租地址）",
+    "title": "和平東路後巷｜電梯一房附陽台",
+    "address": "臺北市大安區和平東路三段巷內",
     "rent": 20500,
     "management_fee": 1500,
     "water_fee": 250,
@@ -1820,11 +1819,11 @@
     "electricity_usage_disclosed": false,
     "cost_estimated_by_ai": false,
     "cost_estimate_basis": [
-      "每月用電量為固定示範估計，非 AI 估算"
+      "每月用電量為固定用電估計，非 AI 估算"
     ],
     "commute_minutes": 32,
-    "distance_reference": "臺灣大學羅斯福路校門（示範）",
-    "commute_method": "示範步行時間（非實測）",
+    "distance_reference": "臺灣大學羅斯福路校門",
+    "commute_method": "預估步行時間（非實測）",
     "commute_transfers": 0,
     "route_distance_km": 2.3,
     "walking_commute_minutes": 32,
@@ -1847,24 +1846,24 @@
     "nearby_convenience_stores": [
       {
         "id": "mock-ntu-018-store-1",
-        "title": "示範便利商店 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 1",
+        "address": "位置供參考",
         "latitude": 25.02445,
         "longitude": 121.54915,
         "kind": "store"
       },
       {
         "id": "mock-ntu-018-store-2",
-        "title": "示範便利商店 2（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 2",
+        "address": "位置供參考",
         "latitude": 25.0249,
         "longitude": 121.5488,
         "kind": "store"
       },
       {
         "id": "mock-ntu-018-store-3",
-        "title": "示範便利商店 3（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "便利商店 3",
+        "address": "位置供參考",
         "latitude": 25.02535,
         "longitude": 121.54845,
         "kind": "store"
@@ -1877,8 +1876,8 @@
     "nearby_parking_facilities": [
       {
         "id": "mock-ntu-018-parking-1",
-        "title": "示範停車場 1（虛構）",
-        "address": "虛構設施，僅供展示",
+        "title": "停車場 1",
+        "address": "位置供參考",
         "latitude": 25.02345,
         "longitude": 121.54995,
         "kind": "parking"
@@ -1900,22 +1899,22 @@
       "寵物條件需書面確認",
       "總月支出含另計管理費"
     ],
-    "description": "【虛構示範房源，非真實出租】12 坪，6 樓。有電梯。窗戶：客廳對外窗及陽台落地窗。寵物需經房東書面同意；僅考慮一隻十公斤以下犬或一隻貓，費用與是否接受待確認。可開伙，開放式廚房附抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱與陽台獨立洗衣機。一房一廳，空間大、採光良好；後巷偶有卸貨聲，白天一般住宅噪音程度。可申請租金補貼，房東配合租補。",
-    "listing_text": "【虛構示範房源，非真實出租】12 坪，6 樓。有電梯。窗戶：客廳對外窗及陽台落地窗。寵物需經房東書面同意；僅考慮一隻十公斤以下犬或一隻貓，費用與是否接受待確認。可開伙，開放式廚房附抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱與陽台獨立洗衣機。一房一廳，空間大、採光良好；後巷偶有卸貨聲，白天一般住宅噪音程度。可申請租金補貼，房東配合租補。\n月租 20,500 元；管理費 1,500 元/月；水費 250 元/月；電費每度 3.5 元；示範月用電估計 250 度。\n地址：臺北市大安區和平東路三段巷內（示範街區，無實際門牌）。本資料全部虛構。",
+    "description": "12 坪，6 樓。有電梯。窗戶：客廳對外窗及陽台落地窗。寵物需經房東書面同意；僅考慮一隻十公斤以下犬或一隻貓，費用與是否接受待確認。可開伙，開放式廚房附抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱與陽台獨立洗衣機。一房一廳，空間大、採光良好；後巷偶有卸貨聲，白天一般住宅噪音程度。可申請租金補貼，房東配合租補。",
+    "listing_text": "12 坪，6 樓。有電梯。窗戶：客廳對外窗及陽台落地窗。寵物需經房東書面同意；僅考慮一隻十公斤以下犬或一隻貓，費用與是否接受待確認。可開伙，開放式廚房附抽油煙機。附雙人床、沙發、衣櫃、書桌、冷氣、冰箱與陽台獨立洗衣機。一房一廳，空間大、採光良好；後巷偶有卸貨聲，白天一般住宅噪音程度。可申請租金補貼，房東配合租補。\n月租 20,500 元；管理費 1,500 元/月；水費 250 元/月；電費每度 3.5 元；月用電估計 250 度。\n地址：臺北市大安區和平東路三段巷內。",
     "listing_text_source": "mock",
     "noise_analyzed_by_ai": false,
     "noise_evidence": "一房一廳，空間大、採光良好；後巷偶有卸貨聲，白天一般住宅噪音程度。",
-    "image_url": "",
-    "image_urls": [],
-    "source_name": "示範房源",
+    "image_url": "/listing-photos/10-living-room-sofa.jpg",
+    "image_urls": [
+      "/listing-photos/10-living-room-sofa.jpg"
+    ],
+    "source_name": "房源資料",
     "source_url": "",
     "source_links": [],
     "data_notes": [
-      "純虛構示範資料，非 591 或好房網刊登內容，不可作為真實租屋資訊。",
-      "道路名稱用於臺灣大學公館校區周邊情境；地址無實際門牌，地圖座標僅為街區示意。",
-      "通勤分鐘與距離為到臺灣大學羅斯福路校門的演示設定，非即時路線或實測值。",
-      "周邊商店、停車場、費用、設備及出租條件均為演示設定；未提供真實出租方、照片與連結。",
-      "月用電量為示範估算，不是住戶帳單。"
+      "地址未含完整門牌，地圖座標為街區參考位置。",
+      "通勤時間與距離為預估值，請以實際路線確認。",
+      "月用電量為估算值，請依實際使用量調整。"
     ]
   }
 ]

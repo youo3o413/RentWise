@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import {
   getHealth,
+  mediaUrl,
   getMapContext,
   getRecommendation,
   parseRequirements,
@@ -29,6 +30,7 @@ import {
   sendRecommendationFeedback,
 } from "./api";
 import MapView from "./MapView";
+import { isPetPreference, setPetPreference } from "./petPreferences";
 
 const NTU_DESTINATION = {
   resolved_label: "台北市 · 大安區 · 國立臺灣大學（公館校區）",
@@ -61,8 +63,8 @@ const initialForm = {
 
 const agentMeta = {
   "Requirement Agent": { icon: Bot, label: "LangGraph 前置需求解析" },
-  "Source Planning Agent": { icon: Route, label: "台大生活圈示範資料規劃" },
-  "Data Loader": { icon: Building2, label: "載入本機虛構示範房源" },
+  "Source Planning Agent": { icon: Route, label: "房源搜尋範圍規劃" },
+  "Data Loader": { icon: Building2, label: "載入房源資料" },
   "Location Agent": { icon: MapPin, label: "步行與大眾運輸通勤分析" },
   "Cost Agent": { icon: CircleDollarSign, label: "每月租屋成本估算" },
   "Property Agent": { icon: Home, label: "房況與設備檢查" },
@@ -484,7 +486,7 @@ function ResultCard({ item }) {
   const [open, setOpen] = useState(item.rank === 1);
   const [activeImage, setActiveImage] = useState(0);
   const p = item.property;
-  const images = [...new Set([p.image_url, ...(p.image_urls || [])].filter(Boolean))].slice(0, 6);
+  const images = [...new Set([p.image_url, ...(p.image_urls || [])].filter(Boolean))].slice(0, 6).map(mediaUrl);
   const sourceLinks = (p.source_links?.length
     ? p.source_links
     : [{ name: p.source_name || "租屋平台", url: p.source_url }]
@@ -500,12 +502,12 @@ function ResultCard({ item }) {
       <div className="rank-badge">#{item.rank}</div>
       <div className="property-gallery">
         {images.length ? (
-          <img className="property-main-image" src={images[activeImage] || images[0]} alt={`${p.title} 房源照片 ${activeImage + 1}`} />
+          <img loading="lazy" decoding="async" className="property-main-image" src={images[activeImage] || images[0]} alt={`${p.title} 房源照片 ${activeImage + 1}`} />
         ) : (
           <div className="property-image-placeholder">
             <Building2 size={52} strokeWidth={1.25} aria-hidden="true" />
-            <strong>虛構示範房源</strong>
-            <span>用於需求比較，無實際刊登照片</span>
+            <strong>房源照片</strong>
+            <span>尚未提供照片</span>
             {p.listing_area_ping && <small>{p.listing_area_ping} 坪 · NT$ {p.rent.toLocaleString()}／月</small>}
           </div>
         )}
@@ -755,9 +757,9 @@ export default function App() {
   }, [form.destination]);
 
   const modeLabel = useMemo(() => {
-    if (data?.mode === "ai") return "示範資料 · OpenAI";
-    if (!data && health?.openai_enabled) return "示範資料 · OpenAI ready";
-    return "示範資料 · Rules";
+    if (data?.mode === "ai") return "OpenAI";
+    if (!data && health?.openai_enabled) return "OpenAI ready";
+    return "Rules";
   }, [data, health]);
   const normalizedWeights = useMemo(() => {
     const total = Object.values(form.weights).reduce(
@@ -808,9 +810,10 @@ export default function App() {
   function togglePetPreference(checked) {
     setPreferenceText((current) => {
       const preferences = current.split(/[、,，]/).map((value) => value.trim()).filter(Boolean);
-      return [...preferences.filter((value) => value !== "可養寵物"), ...(checked ? ["可養寵物"] : [])].join("、");
+      return setPetPreference(preferences, checked).join("、");
     });
-    setRequirementResult(null);
+    // Keep an applied AI parse marked as applied, so submit respects this edit
+    // instead of re-parsing the original text and restoring the pet requirement.
   }
 
   async function applyNaturalLanguageRequirements() {
@@ -960,9 +963,9 @@ export default function App() {
         <div className="hero-copy">
           <span className="eyebrow">MULTI-AGENT RENTAL DECISION PLATFORM</span>
           <h1>
-            <span className="hero-title-line">不是幫你找房，</span>
+            <span className="hero-title-line">不僅幫你找房，</span>
             <span className="hero-title-line">
-              而是幫你做出<span>更好的租屋<span className="hero-no-break">決策。</span></span>
+              且幫你做出<span>更好的租屋<span className="hero-no-break">決策。</span></span>
             </span>
           </h1>
           <p>多個 AI Agent 分別分析地點、成本、房況與生活偏好，再共同完成跨房源比較。</p>
@@ -1112,7 +1115,7 @@ export default function App() {
             <Field label="每月總預算" hint="包含管理費與預估水電">
               <div className="input-prefix"><span>NT$</span><input type="number" value={form.budget} onChange={(e) => update("budget", e.target.value)} /></div>
             </Field>
-            <Field label="通勤目的地" hint="預設為政大；示範房源仍位於台大周邊，到其他目的地的通勤會重新計算">
+            <Field label="通勤目的地" hint="預設為政大；房源位於台大周邊，到其他目的地的通勤會重新計算">
               <input value={form.destination} onChange={(e) => update("destination", e.target.value)} />
               {destinationResolving && (
                 <span className="destination-resolution loading">
@@ -1142,7 +1145,7 @@ export default function App() {
             </Field>
             <Field
               label="最長大眾運輸／步行時間"
-              hint="以預先設定的示範通勤時間比較房源"
+              hint="依預估通勤時間比較房源"
             >
               <div className="input-suffix"><input type="number" value={form.max_commute_minutes} onChange={(e) => update("max_commute_minutes", e.target.value)} /><span>分鐘</span></div>
             </Field>
@@ -1155,7 +1158,7 @@ export default function App() {
             </Field>
             <Field
               label="主要通勤方式"
-              hint="使用示範資料中的大眾運輸／步行或駕車時間"
+              hint="比較大眾運輸／步行或駕車所需時間"
             >
               <select
                 value={form.commute_mode}
@@ -1168,7 +1171,7 @@ export default function App() {
           </div>
 
           <div className="toggle-grid">
-            <Toggle checked={displayPreferences.includes("可養寵物")} onChange={togglePetPreference} label="需要可養寵物" />
+            <Toggle checked={displayPreferences.some(isPetPreference)} onChange={togglePetPreference} label="需要可養寵物" />
             <Toggle checked={form.needs_window} onChange={(v) => update("needs_window", v)} label="需要對外窗" />
             <Toggle checked={form.needs_elevator} onChange={(v) => update("needs_elevator", v)} label="一定要有電梯" />
             <Toggle checked={form.needs_convenience_store} onChange={(v) => update("needs_convenience_store", v)} label="附近需有便利商店" />
@@ -1221,8 +1224,8 @@ export default function App() {
           </button>
           <div className="listing-source">
             <div>
-              <strong>台大生活圈 · 虛構示範房源</strong>
-              <span>房源與租金皆為虛構，無實際可租物件。到台大的通勤時間為示範設定，到政大等其他目的地會重新計算。可調整寵物、開伙、預算與設備需求，觀察排名差異。</span>
+              <strong>依需求挑選前 10 筆房源</strong>
+              <span>調整寵物、開伙、預算與設備需求，系統會分析所有候選房源，依符合程度推薦前 10 筆。</span>
             </div>
           </div>
           {error && <p className="error">{error}</p>}
@@ -1287,11 +1290,11 @@ export default function App() {
               <div>
                 <span className="eyebrow">RANKED RESULTS</span>
                 <h2>
-                  示範房源推薦排名
+                  房源推薦排名
                 </h2>
               </div>
               <div className="results-actions">
-                <span>{data.results.length} 筆示範房源完成分析</span>
+                <span>推薦前 {data.results.length} 筆房源</span>
                 <button type="button" className="map-button" onClick={openMap}>
                   <MapPinned size={18} /> 查看地圖與超商
                 </button>
@@ -1313,7 +1316,7 @@ export default function App() {
           </>
         )}
       </div>
-      <footer>RentWise · 台大生活圈示範資料 · 房源與租金皆為虛構</footer>
+      <footer>RentWise · 智慧租屋決策</footer>
     </main>
   );
 }

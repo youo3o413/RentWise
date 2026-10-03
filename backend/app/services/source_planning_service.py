@@ -32,7 +32,7 @@ def build_source_search_plan(req: UserRequirements) -> SourceSearchPlan:
             region_name="台北市",
             district_name="大安區",
             keywords=(req.destination,),
-            sources=("台大周邊虛構示範房源",),
+            sources=("台大周邊房源資料",),
             resolved_address="台北市大安區台灣大學（公館校區示意位置）",
             latitude=NTU_COORDINATES[0],
             longitude=NTU_COORDINATES[1],
@@ -116,7 +116,7 @@ def build_source_search_plan(req: UserRequirements) -> SourceSearchPlan:
         )
     )
     sources = (
-        ("台大周邊虛構示範房源",)
+        ("台大周邊房源資料",)
         if mock else ("591租屋", "好房網快租")
         if req.property_source == "multi"
         else ("591租屋",)

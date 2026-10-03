@@ -1,5 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 
+export function mediaUrl(url) {
+  return url?.startsWith("/listing-photos/") ? `${API_BASE.replace(/\/$/, "")}${url}` : url;
+}
+
 function formatErrorDetail(detail, fallback) {
   if (typeof detail === "string" && detail.trim()) return detail;
 

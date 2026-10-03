@@ -63,6 +63,13 @@ if (frontend_directory / "assets").is_dir():
     app.mount("/assets", StaticFiles(directory=frontend_directory / "assets"), name="assets")
 
 
+app.mount(
+    "/listing-photos",
+    StaticFiles(directory=Path(__file__).resolve().parent / "data" / "listing_photos"),
+    name="listing-photos",
+)
+
+
 @app.get("/api/health")
 def health() -> dict[str, str | bool]:
     return {
@@ -172,7 +179,7 @@ def _recommendation_response(
     interrupts = state.get("__interrupt__") or ()
     results = [
         PropertyResult.model_validate(item)
-        for item in state["ranked_results"]
+        for item in state["ranked_results"][:10]
     ]
     requirements = state["requirements"]
     return RecommendationResponse(

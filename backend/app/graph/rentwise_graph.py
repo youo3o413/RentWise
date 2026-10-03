@@ -137,7 +137,7 @@ def search_properties_node(state: RentWiseState) -> dict:
                 agent="Data Loader",
                 status="completed" if properties else "failed",
                 message=(
-                    (f"已從本機 JSON 載入 {len(properties)} 筆虛構示範房源；"
+                    (f"已從本機 JSON 載入 {len(properties)} 筆房源資料；"
                      if use_mock_listings(req.property_source)
                      else f"第 {attempt} 次搜尋取得 {len(properties)} 筆可居住房源；")
                     +
@@ -609,6 +609,8 @@ def decision_explanation_node(state: RentWiseState) -> dict:
         ),
         reverse=True,
     )
+    # Score every candidate before selecting the ten recommendations.
+    ranked = ranked[:10]
     for index, item in enumerate(ranked, start=1):
         item["rank"] = index
         suitability = item["assessments"]["suitability"]

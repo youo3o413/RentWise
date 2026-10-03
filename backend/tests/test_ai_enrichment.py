@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import pytest
 
 from app.agents import ai_enrichment
 from app.agents.ai_enrichment import (
@@ -102,8 +103,9 @@ def test_cost_agent_uses_structured_ai_and_only_fills_missing_values(monkeypatch
     assert enriched.cost_estimated_by_ai is True
 
 
+@pytest.mark.parametrize("bundled", [False, True])
 def test_property_agent_sends_image_and_never_treats_unseen_window_as_no_window(
-    monkeypatch,
+    monkeypatch, bundled,
 ):
     parsed = PropertyVisionBatch(
         analyses=[
@@ -123,6 +125,10 @@ def test_property_agent_sends_image_and_never_treats_unseen_window_as_no_window(
             assert kwargs["text_format"] is PropertyVisionBatch
             content = kwargs["input"][0]["content"]
             assert any(item["type"] == "input_image" for item in content)
+            if bundled:
+                images = [item for item in content if item["type"] == "input_image"]
+                assert len(images) == 1
+                assert images[0]["image_url"].startswith("data:image/jpeg;base64,")
             return SimpleNamespace(output_parsed=parsed)
 
     class FakeOpenAI:
@@ -132,6 +138,9 @@ def test_property_agent_sends_image_and_never_treats_unseen_window_as_no_window(
     monkeypatch.setattr(ai_enrichment, "get_settings", _mock_settings)
     monkeypatch.setattr(ai_enrichment, "OpenAI", FakeOpenAI)
     property_ = _property()
+    if bundled:
+        property_.image_url = "/listing-photos/01-bright-studio-window.jpg"
+        property_.image_urls = [property_.image_url]
     analyses, _ = analyze_property_images([property_])
     enriched = apply_property_vision(property_, analyses[property_.id])
 

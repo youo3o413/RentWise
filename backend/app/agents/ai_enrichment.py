@@ -5,6 +5,7 @@ from openai import OpenAI, OpenAIError, RateLimitError
 from pydantic import BaseModel, Field
 
 from app.config import get_settings
+from app.services.listing_photo_service import vision_image_url
 from app.models.schemas import (
     ListingRequirementEvidence,
     Property,
@@ -304,6 +305,9 @@ def interpret_listing_requirements(
 條件是否符合。你必須理解同義、口語、縮寫與委婉語句，例如「禁寵／不可寵物」
 代表不可養貓，「毛孩可談」不等於明確允許，「可報稅／300億租金補貼」可支持
 租金補貼。否定語句優先於正面關鍵字。
+寵物包括烏龜、兔子、鼠、鳥、魚、爬蟲及其他飼養動物，不限貓狗。
+須保留並核對需求中的種類；「可養貓」不能作為允許烏龜的證據，僅允許某種動物
+不能滿足其他種類的需求。未說明其他種類是否接受時標為 unknown。
 
 每個 property_id 必須回傳每一個輸入 requirement，label 必須原樣保留：
 - met：刊登文字有明確證據符合。
@@ -404,19 +408,20 @@ def apply_listing_requirement_analysis(
 def analyze_property_images(
     properties: list[Property],
 ) -> tuple[dict[str, PropertyVisionItem], str]:
-    candidates = [
-        item
-        for item in properties
-        if any(
-            image.startswith("http") and "images.unsplash.com" not in image
-            for image in [item.image_url, *item.image_urls]
-        )
-    ]
-    if not candidates:
-        return {}, "沒有可供 AI 判讀的實際刊登圖片"
     settings = get_settings()
     if not settings.openai_api_key:
         return {}, "未設定 OpenAI API Key，略過房源圖片判讀"
+    images_by_id = {
+        item.id: [
+            resolved
+            for image in dict.fromkeys([item.image_url, *item.image_urls])
+            if (resolved := vision_image_url(image))
+        ][:4]
+        for item in properties
+    }
+    candidates = [item for item in properties if images_by_id[item.id]]
+    if not candidates:
+        return {}, "沒有可供 AI 判讀的房源圖片"
 
     content: list[dict[str, str]] = [
         {
@@ -441,22 +446,20 @@ def analyze_property_images(
                 ),
             }
         )
-        images = list(dict.fromkeys([item.image_url, *item.image_urls]))
         content.extend(
             {
                 "type": "input_image",
                 "image_url": image,
                 "detail": "low",
             }
-            for image in images[:4]
-            if image.startswith("http") and "images.unsplash.com" not in image
+            for image in images_by_id[item.id]
         )
     try:
         response = OpenAI(api_key=settings.openai_api_key).responses.parse(
             model=settings.openai_model,
             input=[{"role": "user", "content": content}],
             text_format=PropertyVisionBatch,
-            max_output_tokens=1800,
+            max_output_tokens=max(1800, len(candidates) * 300),
             timeout=40,
         )
         parsed = response.output_parsed

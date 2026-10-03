@@ -53,7 +53,7 @@ def _distance_score(distance: int | None) -> float | None:
 
 def location_assessment(property_: Property, req: UserRequirements) -> AgentAssessment:
     positives, concerns = [], []
-    amenity_source = "示範資料" if property_.nearby_data_source == "mock" else "OpenStreetMap"
+    amenity_source = "周邊設施資料" if property_.nearby_data_source == "mock" else "OpenStreetMap"
     commute_available = property_.commute_minutes is not None
     commute_ratio = (
         property_.commute_minutes / req.max_commute_minutes
@@ -287,9 +287,16 @@ def cost_assessment(property_: Property, req: UserRequirements) -> AgentAssessme
     )
 
 
+PET_SPECIES = (
+    "貓", "狗", "烏龜", "陸龜", "水龜", "兔", "倉鼠", "天竺鼠", "鼠",
+    "鸚鵡", "鳥", "魚", "蛇", "蜥蜴", "守宮", "刺蝟", "蜜袋鼯", "爬蟲",
+)
+PET_WORDS = "|".join(("寵物", "毛孩", "毛小孩", "犬", *PET_SPECIES))
+
+
 def _is_pet_preference(preference: str) -> bool:
-    return bool(re.search(r"寵物|毛孩|毛小孩|貓|狗|犬", preference)) and not bool(
-        re.search(r"不養|不飼養|沒有|無寵|不需要", preference)
+    return bool(re.search(PET_WORDS, preference)) and not bool(
+        re.search(r"不養|不飼養|沒有|無寵|不需要|無需|不可|不能|不允許|禁止|不得|謝絕|禁養|禁寵", preference)
     )
 
 
@@ -304,14 +311,27 @@ def _policy_preference_check(
 
     if _is_pet_preference(preference):
         requested = preference.replace("犬", "狗")
-        species = [animal for animal in ("貓", "狗") if animal in requested]
+        # Prefer the AI's canonical species label, including less common pets.
+        canonical = re.search(r"寵物[（(]([^）)]+)[）)]", requested)
+        if canonical:
+            species = []
+            for label in re.split(r"[、,，]", canonical.group(1)):
+                label = label.strip()
+                if label:
+                    matches = [animal for animal in PET_SPECIES if animal in label]
+                    species.extend(matches or [re.escape(label)])
+        else:
+            species = [animal for animal in PET_SPECIES if animal in requested]
+        # Avoid treating 倉鼠 and 鼠 as two separate requested pets.
+        species = [animal for animal in species if not any(animal != other and animal in other for other in species)]
+        species_words = "|".join(species) or PET_WORDS
         pet_clauses = "；".join(
             clause
             for clause in re.split(r"[。；;\n]", compact)
-            if re.search(r"寵|毛孩|毛小孩|貓|狗", clause)
+            if re.search(rf"寵|{PET_WORDS}|{species_words}", clause)
         )
         general_ban = re.search(
-            rf"{deny}(?:寵物|毛孩|毛小孩)|禁寵|禁養(?:寵物)?(?!貓|狗)",
+            rf"{deny}(?:寵物|毛孩|毛小孩)|禁寵|禁養(?=寵物|[，,。；;\s]|$)(?:寵物)?",
             pet_clauses,
         )
         species_ban = any(
@@ -320,7 +340,7 @@ def _policy_preference_check(
         )
         cats_only = bool(re.search(r"(?:只|僅)(?:接受|允許|限|能|可)?(?:飼養|養)?貓", pet_clauses))
         dogs_only = bool(re.search(r"(?:只|僅)(?:接受|允許|限|能|可)?(?:飼養|養)?(?:小型)?狗", pet_clauses))
-        restricted_species = (cats_only and "狗" in species) or (dogs_only and "貓" in species)
+        restricted_species = (cats_only and any(animal != "貓" for animal in species)) or (dogs_only and any(animal != "狗" for animal in species))
         small_dogs_only = bool(re.search(r"(?:限|僅|只|可養)小型狗", pet_clauses))
         conditional = bool(re.search(
             r"可談|需談|另議|面議|待確認|需確認|請先詢問|"

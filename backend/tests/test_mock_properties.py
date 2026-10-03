@@ -9,6 +9,7 @@ from app.models.schemas import UserRequirements
 from app.services.mock_property_service import load_mock_properties
 from app.services.property_service import load_properties_for_requirements
 from app.agents.rule_agents import property_assessment, _policy_preference_check
+from app.services.listing_photo_service import PHOTO_DIRECTORY, vision_image_url
 
 
 @pytest.fixture
@@ -24,9 +25,12 @@ def test_fixture_is_diverse_and_does_not_link_to_real_listings():
     assert {p.has_window for p in properties} == {True, False, None}
     assert {p.has_elevator for p in properties} == {True, False, None}
     assert {p.rental_subsidy_eligible for p in properties} == {True, False, None}
+    assert len({p.image_url for p in properties}) == 18
     for p in properties:
-        assert not p.source_url and not p.source_links and not p.image_url and not p.image_urls
-        assert "虛構" in p.description
+        assert not p.source_url and not p.source_links
+        assert p.image_urls == [p.image_url]
+        assert p.image_url.startswith("/listing-photos/")
+        assert (PHOTO_DIRECTORY / p.image_url.rsplit("/", 1)[-1]).is_file()
         assert p.latitude and p.longitude and p.listing_text
     req = UserRequirements(preferences=["可養寵物", "可開伙"])
     statuses = {label: set() for label in req.preferences}
@@ -67,6 +71,19 @@ def test_fixture_objects_and_commute_modes_are_independent():
     ("可養狗", "可養貓；犬隻不接受。", "unmet"),
     ("可養貓", "可養貓，不可養狗。", "met"),
     ("可養寵物", "寵物政策尚未提供。", "unknown"),
+    ("可養烏龜", "可養寵物，寵物友善。", "met"),
+    ("可養寵物（烏龜）", "可養烏龜。", "met"),
+    ("可養烏龜", "不可養寵物。", "unmet"),
+    ("可養寵物（烏龜）", "可養寵物，但不可養烏龜。", "unmet"),
+    ("可養烏龜", "只接受貓。", "unmet"),
+    ("可養寵物（烏龜）", "可養貓，不可養狗。", "unknown"),
+    ("可養烏龜", "可養烏龜，需房東同意。", "unknown"),
+    ("可養烏龜", "禁養狗，可養烏龜。", "met"),
+    ("可養寵物（烏龜、貓）", "可養烏龜。", "unknown"),
+    ("可養寵物（小型狗）", "僅限小型狗。", "met"),
+    ("可養寵物（貓咪）", "僅限貓。", "met"),
+    ("可養倉鼠", "可養倉鼠。", "met"),
+    ("可養寵物（羊駝）", "可養羊駝。", "met"),
 ])
 def test_pet_and_cooking_rules_respect_restrictions(preference, text, status):
     assert _policy_preference_check(preference, text, "示範資料").status == status
@@ -84,7 +101,9 @@ def test_mock_recommendations_change_with_needs_without_network(monkeypatch, moc
     pets_response = client.post("/api/recommend", json={**shared, "budget": 25000, "max_commute_minutes": 40, "preferences": ["可養寵物", "可開伙"]})
     assert budget_response.status_code == pets_response.status_code == 200
     budget, pets = budget_response.json(), pets_response.json()
-    assert len(budget["results"]) == len(pets["results"]) == 18
+    assert len(budget["results"]) == len(pets["results"]) == 10
+    assert any(t["agent"] == "Data Loader" and t["property_count"] == 18 for t in pets["trace"])
+    assert [r["rank"] for r in pets["results"]] == list(range(1, 11))
     assert pets["property_source"] == "mock"
     assert budget["results"][0]["property"]["id"] != pets["results"][0]["property"]["id"]
     winner = pets["results"][0]
@@ -93,4 +112,23 @@ def test_mock_recommendations_change_with_needs_without_network(monkeypatch, moc
     assert pets["awaiting_feedback"]
     feedback = client.post(f'/api/recommend/{pets["thread_id"]}/feedback', json={"accepted": True})
     assert feedback.status_code == 200 and feedback.json()["workflow_status"] == "completed"
+    assert len(feedback.json()["results"]) == 10
     assert not attempted_connections
+
+
+def test_bundled_photos_are_served_and_can_be_read_by_vision():
+    import base64
+
+    client = TestClient(app)
+    for p in load_mock_properties(UserRequirements()):
+        response = client.get(p.image_url)
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/jpeg"
+        assert response.content.startswith(b"\xff\xd8")
+        payload = vision_image_url(p.image_url)
+        assert payload.startswith("data:image/jpeg;base64,")
+        assert base64.b64decode(payload.split(",", 1)[1]) == response.content
+    assert vision_image_url("/listing-photos/../mock_properties.json") is None
+    assert vision_image_url("/listing-photos/../../secret.jpg") is None
+    assert vision_image_url("/listing-photos/missing.jpg") is None
+    assert vision_image_url("file:///etc/passwd") is None

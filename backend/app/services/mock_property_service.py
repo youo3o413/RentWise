@@ -22,11 +22,9 @@ def load_mock_properties(req: UserRequirements) -> list[Property]:
     ]
     for item in properties:
         item.listing_text_source = "mock"
-        # No external detail pages or images, even if a fixture is edited later.
+        # Listings have no external detail links; bundled photos remain available.
         item.source_url = ""
         item.source_links = []
-        item.image_url = ""
-        item.image_urls = []
         if is_ntu_destination(req.destination):
             item.commute_minutes = (
                 item.driving_commute_minutes
@@ -34,9 +32,9 @@ def load_mock_properties(req: UserRequirements) -> list[Property]:
                 else item.walking_commute_minutes
             )
             item.commute_method = (
-                "示範駕車時間（非實測）"
+                "預估駕車時間（非實測）"
                 if req.commute_mode == "drive"
-                else "示範步行時間（非實測）"
+                else "預估步行時間（非實測）"
             )
         else:
             # NTU demo times cannot describe a different destination.
